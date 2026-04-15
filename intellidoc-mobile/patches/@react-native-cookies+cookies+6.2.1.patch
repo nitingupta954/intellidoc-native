@@ -1,0 +1,54 @@
+diff --git a/node_modules/@react-native-cookies/cookies/index.js b/node_modules/@react-native-cookies/cookies/index.js
+index 84c890a..dfc18a1 100644
+--- a/node_modules/@react-native-cookies/cookies/index.js
++++ b/node_modules/@react-native-cookies/cookies/index.js
+@@ -12,23 +12,35 @@ const RNCookieManagerAndroid = NativeModules.RNCookieManagerAndroid;
+ 
+ let CookieManager;
+ 
++const mockCookieManager = {
++  getAll: () => Promise.resolve({}),
++  clearAll: () => Promise.resolve(true),
++  get: () => Promise.resolve({}),
++  set: () => Promise.resolve(true),
++  clearByName: () => Promise.resolve(true),
++  flush: () => Promise.resolve(true),
++  removeSessionCookies: () => Promise.resolve(true),
++  setFromResponse: () => Promise.resolve(true),
++  getFromResponse: () => Promise.resolve({}),
++};
++
+ if (Platform.OS === 'ios') {
+-  invariant(
+-    RNCookieManagerIOS,
+-    '@react-native-community/cookies: Add RNCookieManagerIOS.h and RNCookieManagerIOS.m to your Xcode project',
+-  );
+-  CookieManager = RNCookieManagerIOS;
++  if (!RNCookieManagerIOS) {
++    console.warn('@react-native-community/cookies: Native module missing (likely in Expo Go). Using mock.');
++    CookieManager = mockCookieManager;
++  } else {
++    CookieManager = RNCookieManagerIOS;
++  }
+ } else if (Platform.OS === 'android') {
+-  invariant(
+-    RNCookieManagerAndroid,
+-    '@react-native-community/cookies: Import libraries to android "react-native link @react-native-community/cookies"',
+-  );
+-  CookieManager = RNCookieManagerAndroid;
++  if (!RNCookieManagerAndroid) {
++    console.warn('@react-native-community/cookies: Native module missing (likely in Expo Go). Using mock.');
++    CookieManager = mockCookieManager;
++  } else {
++    CookieManager = RNCookieManagerAndroid;
++  }
+ } else {
+-  invariant(
+-    CookieManager,
+-    '@react-native-community/cookies: Invalid platform. This library only supports Android and iOS.',
+-  );
++  console.warn('@react-native-community/cookies: Invalid platform. This library only supports Android and iOS. Using a no-op mock.');
++  CookieManager = mockCookieManager;
+ }
+ 
+ const functions = ['setFromResponse', 'getFromResponse'];
