@@ -19,6 +19,8 @@ import {
 } from '../api/conversations';
 import { Message, Conversation, Citation, CragConfirmation, StreamEvent } from '../types';
 
+const randomId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
+
 interface ChatState {
   conversations: Conversation[];
   activeConversationId: string | null;
@@ -165,11 +167,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const affirmative = ['yes', 'yeah', 'yep', 'sure', 'ok', 'okay', 'do it', 'search', 'y', 'go ahead'];
       const negative = ['no', 'nope', 'nah', "don't", 'stop', 'cancel', 'n'];
       if (affirmative.includes(normalized)) {
-        get()._addMessage({ id: crypto.randomUUID(), conversationId: activeConversationId, role: 'user', content, createdAt: new Date().toISOString() });
+        get()._addMessage({ id: randomId(), conversationId: activeConversationId, role: 'user', content, createdAt: new Date().toISOString() });
         await get().resolveWebSearch(activeConversationId, lastAsst.needsConfirmation.pendingId, true);
         return;
       } else if (negative.includes(normalized)) {
-        get()._addMessage({ id: crypto.randomUUID(), conversationId: activeConversationId, role: 'user', content, createdAt: new Date().toISOString() });
+        get()._addMessage({ id: randomId(), conversationId: activeConversationId, role: 'user', content, createdAt: new Date().toISOString() });
         await get().resolveWebSearch(activeConversationId, lastAsst.needsConfirmation.pendingId, false);
         return;
       }
@@ -190,7 +192,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     // Optimistic user message
-    const userMsgId = crypto.randomUUID();
+    const userMsgId = randomId();
     get()._addMessage({
       id: userMsgId,
       conversationId,
@@ -201,7 +203,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     get()._setGenerating(true);
 
     // Optimistic assistant streaming placeholder
-    const astMsgId = crypto.randomUUID();
+    const astMsgId = randomId();
     get()._addMessage({
       id: astMsgId,
       conversationId,
