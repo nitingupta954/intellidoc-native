@@ -62,7 +62,7 @@ export default function WorkspacesScreen() {
                 </View>
                 <View style={styles.wsTextWrap}>
                   <Text style={styles.wsTitle}>{ws.name}</Text>
-                  <Text style={styles.wsRole}>{ws.role === 'admin' ? 'Admin' : 'Member'}</Text>
+                  <Text style={styles.wsRole}>{(ws.role === 'ADMIN' || ws.role === 'OWNER') ? 'Admin' : 'Member'}</Text>
                 </View>
                 {isActive && (
                   <View style={styles.activeBadge}>

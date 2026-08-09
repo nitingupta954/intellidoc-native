@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import Text from '../../../src/components/Text';
-import { View, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useWorkspaceStore } from '../../../src/store/workspaceStore';
-import { fetchKnowledgeBases, deleteKnowledgeBase } from '../../../src/api/kb';
+import { fetchKnowledgeBases, deleteKnowledgeBase, createKnowledgeBase } from '../../../src/api/kb';
 import { Colors } from '../../../src/theme/colors';
 import { KnowledgeBase } from '../../../src/types';
 import { formatDate } from '../../../src/lib/formatting';
@@ -15,6 +15,10 @@ export default function KnowledgeBasesScreen() {
   const queryClient = useQueryClient();
   const { activeWorkspaceId } = useWorkspaceStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
   const { data: kbs = [], refetch, isLoading } = useQuery({
     queryKey: ['knowledge-bases', activeWorkspaceId],
@@ -50,10 +54,29 @@ export default function KnowledgeBasesScreen() {
     );
   };
 
+  const handleCreate = async () => {
+    if (!newName.trim() || !activeWorkspaceId) return;
+    setIsCreating(true);
+    try {
+      await createKnowledgeBase(newName, newDescription, activeWorkspaceId);
+      queryClient.invalidateQueries({ queryKey: ['knowledge-bases', activeWorkspaceId] });
+      setCreateModalVisible(false);
+      setNewName('');
+      setNewDescription('');
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'Failed to create knowledge base.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.title}>Knowledge</Text>
+        <TouchableOpacity style={styles.createBtn} onPress={() => setCreateModalVisible(true)}>
+          <Text style={styles.createBtnText}>+ Create</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -71,7 +94,11 @@ export default function KnowledgeBasesScreen() {
         </View>
 
         {kbs.map((kb: KnowledgeBase) => (
-          <View key={kb.id} style={styles.kbCard}>
+          <TouchableOpacity 
+            key={kb.id} 
+            style={styles.kbCard}
+            onPress={() => router.push(`/(app)/knowledge-bases/${kb.id}` as any)}
+          >
             <View style={styles.kbHeader}>
               <View style={styles.kbIconBox}>
                 <Text style={styles.kbIconText}>🧠</Text>
@@ -97,7 +124,7 @@ export default function KnowledgeBasesScreen() {
             >
               <Text style={styles.chatBtnText}>💬 Chat with {kb.name}</Text>
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         ))}
 
         {!isLoading && kbs.length === 0 && (
@@ -105,11 +132,55 @@ export default function KnowledgeBasesScreen() {
             <Text style={styles.emptyIcon}>📦</Text>
             <Text style={styles.emptyTitle}>No Knowledge Bases</Text>
             <Text style={styles.emptySubtitle}>
-              Create a knowledge base on the web app to organize your documents.
+              Tap the "+ Create" button above to organize your documents into a new collection.
             </Text>
           </View>
         )}
       </ScrollView>
+
+      <Modal
+        visible={createModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setCreateModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>New Knowledge Base</Text>
+            
+            <Text style={styles.modalLabel}>Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Q3 Financial Reports"
+              placeholderTextColor={Colors.textMuted}
+              value={newName}
+              onChangeText={setNewName}
+            />
+
+            <Text style={styles.modalLabel}>Description (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Earnings calls, balance sheets..."
+              placeholderTextColor={Colors.textMuted}
+              value={newDescription}
+              onChangeText={setNewDescription}
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setCreateModalVisible(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalCreateBtn, (!newName.trim() || isCreating) && { opacity: 0.5 }]} 
+                onPress={handleCreate}
+                disabled={!newName.trim() || isCreating}
+              >
+                {isCreating ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalCreateText}>Create</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -117,9 +188,23 @@ export default function KnowledgeBasesScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bgDark },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 16,
+  },
+  createBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  createBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
   title: { fontSize: 28, fontWeight: '800', color: Colors.text, letterSpacing: -0.5 },
   listContent: { paddingHorizontal: 24, paddingBottom: 40 },
@@ -180,4 +265,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     lineHeight: 20,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.bgCard,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: { fontSize: 20, fontWeight: '700', color: Colors.text, marginBottom: 20 },
+  modalLabel: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary, marginBottom: 8 },
+  input: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 12,
+    color: Colors.text,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  modalActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+  modalCancelBtn: { flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, marginRight: 8, borderWidth: 1, borderColor: Colors.border },
+  modalCancelText: { color: Colors.text, fontWeight: '600', fontSize: 16 },
+  modalCreateBtn: { flex: 1, padding: 14, alignItems: 'center', borderRadius: 12, backgroundColor: Colors.primary, marginLeft: 8 },
+  modalCreateText: { color: '#fff', fontWeight: '600', fontSize: 16 },
 });

@@ -18,7 +18,15 @@ export interface StoredCookie {
  * This is the single source of truth for the session.
  */
 export async function saveSessionCookie(cookie: StoredCookie): Promise<void> {
-  await SecureStore.setItemAsync(SESSION_COOKIE_KEY, JSON.stringify(cookie));
+  if (Platform.OS === 'web') {
+    try {
+      localStorage.setItem(SESSION_COOKIE_KEY, JSON.stringify(cookie));
+    } catch (e) {
+      console.warn('localStorage not available', e);
+    }
+  } else {
+    await SecureStore.setItemAsync(SESSION_COOKIE_KEY, JSON.stringify(cookie));
+  }
 }
 
 /**
@@ -26,7 +34,12 @@ export async function saveSessionCookie(cookie: StoredCookie): Promise<void> {
  */
 export async function loadSessionCookie(): Promise<StoredCookie | null> {
   try {
-    const raw = await SecureStore.getItemAsync(SESSION_COOKIE_KEY);
+    let raw: string | null = null;
+    if (Platform.OS === 'web') {
+      raw = localStorage.getItem(SESSION_COOKIE_KEY);
+    } else {
+      raw = await SecureStore.getItemAsync(SESSION_COOKIE_KEY);
+    }
     if (!raw) return null;
     return JSON.parse(raw) as StoredCookie;
   } catch {
@@ -38,7 +51,13 @@ export async function loadSessionCookie(): Promise<StoredCookie | null> {
  * Clear session cookie from both SecureStore and the native cookie jar.
  */
 export async function clearSessionCookie(): Promise<void> {
-  await SecureStore.deleteItemAsync(SESSION_COOKIE_KEY);
+  if (Platform.OS === 'web') {
+    try {
+      localStorage.removeItem(SESSION_COOKIE_KEY);
+    } catch (e) {}
+  } else {
+    await SecureStore.deleteItemAsync(SESSION_COOKIE_KEY);
+  }
   try {
     if (CookieManager) {
       await CookieManager.clearAll();

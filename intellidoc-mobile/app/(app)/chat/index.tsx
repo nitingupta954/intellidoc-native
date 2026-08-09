@@ -5,17 +5,21 @@ import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Pl
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { FlashList, FlashListRef } from '@shopify/flash-list';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useWorkspaceStore } from '../../../src/store/workspaceStore';
 import { useChatStore } from '../../../src/store/chatStore';
 import { Colors } from '../../../src/theme/colors';
 import MarkdownView from '../../../src/components/MarkdownView';
 import { Message, CragConfirmation } from '../../../src/types';
 import { formatConfidenceScore } from '../../../src/lib/formatting';
+import { fetchDocuments } from '../../../src/api/documents';
+import { fetchKnowledgeBases } from '../../../src/api/kb';
 
 export default function ChatScreen() {
-  const { id, documentId, question, workspaceId: paramWsId } = useLocalSearchParams<{
+  const { id, documentId: paramDocId, knowledgeBaseId: paramKbId, question, workspaceId: paramWsId } = useLocalSearchParams<{
     id?: string;
     documentId?: string;
+    knowledgeBaseId?: string;
     question?: string;
     workspaceId?: string;
   }>();
@@ -26,6 +30,7 @@ export default function ChatScreen() {
   const {
     activeConversationId,
     setActiveConversation,
+    conversations,
     messages,
     isGenerating,
     isLoading,
@@ -36,17 +41,41 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   const listRef = useRef<FlashListRef<any>>(null);
 
+  // Derive active conversation context
+  const activeConversation = conversations.find(c => c.id === activeConversationId);
+  
+  // The context comes from route params (if new chat) OR from the existing conversation metadata
+  const resolvedDocId = paramDocId || (activeConversation?.metadata as any)?.documentId || undefined;
+  const resolvedKbId = paramKbId || activeConversation?.knowledgeBaseId || undefined;
+
+  // Fetch lists to find names
+  const { data: allDocs = [] } = useQuery({
+    queryKey: ['documents', wsId],
+    queryFn: () => fetchDocuments(wsId!),
+    enabled: !!wsId && !!resolvedDocId,
+  });
+  
+  const { data: allKbs = [] } = useQuery({
+    queryKey: ['knowledge-bases', wsId],
+    queryFn: () => fetchKnowledgeBases(wsId!),
+    enabled: !!wsId && !!resolvedKbId,
+  });
+
+  const activeDoc = (allDocs as any[]).find((d: any) => d.id === resolvedDocId);
+  const activeKb = (allKbs as any[]).find((k: any) => k.id === resolvedKbId);
+
   // Initialize conversation based on route params
   useEffect(() => {
     if (id) {
       if (activeConversationId !== id) {
         setActiveConversation(id);
       }
-    } else {
+    } else if (!activeConversationId) {
+      // Only reset if we truly have no active conversation or explicitly requested to clear
       setActiveConversation(null);
       // Pre-fill question if coming from document suggested questions
       if (question) {
-        sendMessage(question, wsId!, undefined, documentId);
+        sendMessage(question, wsId!, resolvedKbId, resolvedDocId);
       }
     }
   }, [id, question]);
@@ -55,7 +84,7 @@ export default function ChatScreen() {
     if (!input.trim() || isGenerating) return;
     const content = input.trim();
     setInput('');
-    sendMessage(content, wsId!, undefined, documentId);
+    sendMessage(content, wsId!, resolvedKbId, resolvedDocId);
   };
 
   const renderMessage = ({ item }: { item: Message }) => {
@@ -156,7 +185,11 @@ export default function ChatScreen() {
           </TouchableOpacity>
           <View style={styles.headerTitleWrap}>
             <Text style={styles.headerTitle}>IntelliDoc AI</Text>
-            {documentId && <Text style={styles.headerSub}>Chatting with Document</Text>}
+            {activeDoc && <Text style={styles.headerSub} numberOfLines={1}>📄 {activeDoc.filename}</Text>}
+            {activeKb && <Text style={styles.headerSub} numberOfLines={1}>🧠 {activeKb.name}</Text>}
+            {(!activeDoc && !activeKb && (resolvedDocId || resolvedKbId)) && (
+              <Text style={styles.headerSub}>Chatting with context</Text>
+            )}
           </View>
           <TouchableOpacity style={styles.iconBtn} onPress={() => {
              setActiveConversation(null);
@@ -184,9 +217,25 @@ export default function ChatScreen() {
               }}
               ListEmptyComponent={
                 <View style={styles.emptyWrap}>
-                  <Text style={styles.emptyEmoji}>👋</Text>
-                  <Text style={styles.emptyTitle}>How can I help?</Text>
-                  <Text style={styles.emptySub}>Ask me anything about your documents.</Text>
+                  {(!resolvedDocId && !resolvedKbId) ? (
+                    <>
+                      <Text style={styles.emptyEmoji}>📄</Text>
+                      <Text style={styles.emptyTitle}>No Document Selected</Text>
+                      <Text style={styles.emptySub}>Please upload or select a PDF to start chatting.</Text>
+                      <TouchableOpacity 
+                        style={styles.redirectBtn}
+                        onPress={() => router.push('/(app)/documents' as any)}
+                      >
+                        <Text style={styles.redirectBtnText}>Go to Documents</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.emptyEmoji}>👋</Text>
+                      <Text style={styles.emptyTitle}>How can I help?</Text>
+                      <Text style={styles.emptySub}>Ask me anything about your documents.</Text>
+                    </>
+                  )}
                 </View>
               }
             />
@@ -197,17 +246,18 @@ export default function ChatScreen() {
         <View style={styles.inputArea}>
           <TextInput
             style={styles.input}
-            placeholder="Type a message..."
+            placeholder={(!resolvedDocId && !resolvedKbId) ? "Select a document to chat" : "Type a message..."}
             placeholderTextColor={Colors.textMuted}
             value={input}
             onChangeText={setInput}
             multiline
             maxLength={1000}
+            editable={!!(resolvedDocId || resolvedKbId)}
           />
           <TouchableOpacity
-            style={[styles.sendBtn, (!input.trim() || isGenerating) && styles.sendBtnDisabled]}
+            style={[styles.sendBtn, (!input.trim() || isGenerating || (!resolvedDocId && !resolvedKbId)) && styles.sendBtnDisabled]}
             onPress={handleSend}
-            disabled={!input.trim() || isGenerating}
+            disabled={!input.trim() || isGenerating || (!resolvedDocId && !resolvedKbId)}
           >
             <Text style={styles.sendIcon}>↑</Text>
           </TouchableOpacity>
@@ -229,7 +279,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
-  headerTitleWrap: { alignItems: 'center' },
+  headerTitleWrap: { alignItems: 'center', flex: 1, paddingHorizontal: 10 },
   headerTitle: { fontSize: 17, fontWeight: '700', color: Colors.text },
   headerSub: { fontSize: 12, color: Colors.primary },
   iconBtn: { padding: 8 },
@@ -240,7 +290,19 @@ const styles = StyleSheet.create({
   emptyWrap: { alignItems: 'center', marginTop: 100 },
   emptyEmoji: { fontSize: 48, marginBottom: 16 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: Colors.text, marginBottom: 8 },
-  emptySub: { fontSize: 15, color: Colors.textSecondary },
+  emptySub: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', paddingHorizontal: 20 },
+  redirectBtn: {
+    marginTop: 24,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  redirectBtnText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   msgRow: { flexDirection: 'row', marginBottom: 20, alignItems: 'flex-end' },
   msgUserRow: { justifyContent: 'flex-end' },
   msgAsstRow: { justifyContent: 'flex-start' },

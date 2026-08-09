@@ -243,6 +243,7 @@ export interface PickedFile {
   name: string;
   mimeType: string;
   size: number;
+  file?: any;
 }
 
 export interface UploadQueueItem {

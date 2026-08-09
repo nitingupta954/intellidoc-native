@@ -90,9 +90,9 @@ const MetricGauge = ({ label, icon, value, description }: { label: string; icon:
           strokeWidth={10}
           radius={40}
           chartConfig={{
-            backgroundColor: 'transparent',
-            backgroundGradientFrom: '#ffffff',
-            backgroundGradientTo: '#ffffff',
+            backgroundColor: Colors.bgCard,
+            backgroundGradientFrom: Colors.bgCard,
+            backgroundGradientTo: Colors.bgCard,
             backgroundGradientFromOpacity: 0,
             backgroundGradientToOpacity: 0,
             color: (opacity = 1) => col,
@@ -210,11 +210,11 @@ export default function StatsScreen() {
   ] as const;
 
   const chartConfig = {
-    backgroundColor: '#ffffff',
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
-    color: (opacity = 1) => `rgba(30, 45, 90, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
+    backgroundColor: Colors.bgCard,
+    backgroundGradientFrom: Colors.bgCard,
+    backgroundGradientTo: Colors.bgCard,
+    color: (opacity = 1) => `rgba(96, 165, 250, ${opacity})`, // primaryLight for charts
+    labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`, // textMuted
     strokeWidth: 2,
     barPercentage: 0.5,
     decimalPlaces: 0,
@@ -287,7 +287,7 @@ export default function StatsScreen() {
 
           {!ragas || ragas.averages.evaluatedCount === 0 ? (
             <View style={styles.emptyState}>
-              <Feather name="info" size={20} color="#94a3b8" />
+              <Feather name="info" size={20} color={Colors.textMuted} />
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text style={styles.emptyStateTitle}>No evaluated responses yet</Text>
                 <Text style={styles.emptyStateDesc}>RAGAS scores will appear here automatically after chat messages are processed.</Text>
@@ -439,13 +439,13 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   centerContainer: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.bgDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.bgDark,
   },
   scrollContent: {
     padding: 16,
@@ -456,11 +456,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: Colors.text,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748b',
+    color: Colors.textSecondary,
     marginTop: 4,
   },
   
@@ -472,12 +472,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   metricCard: {
-    width: (contentWidth - 12) / 2,
-    backgroundColor: '#ffffff',
+    width: '48%',
+    backgroundColor: Colors.bgCard,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
   },
   metricCardHeader: {
     flexDirection: 'row',
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
   metricCardTitle: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
   metricCardBody: {
     flexDirection: 'row',
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: Colors.text,
   },
   metricChangeBadge: {
     flexDirection: 'row',
@@ -511,17 +511,17 @@ const styles = StyleSheet.create({
   metricChangeText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#22c55e',
+    color: Colors.success,
     marginLeft: 2,
   },
 
   // Panels
   sectionPanel: {
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.bgCard,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
     marginBottom: 20,
   },
   sectionHeader: {
@@ -533,11 +533,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: Colors.text,
   },
   sectionSubtitle: {
     fontSize: 13,
-    color: '#64748b',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
   },
   evalLabel: {
     fontSize: 10,
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
   evalValue: {
     fontSize: 16,
@@ -557,28 +557,28 @@ const styles = StyleSheet.create({
   evalTotal: {
     fontSize: 12,
     fontWeight: 'normal',
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
 
   // Empty State
   emptyState: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.surface,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
     marginTop: 8,
   },
   emptyStateTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0f172a',
+    color: Colors.text,
   },
   emptyStateDesc: {
     fontSize: 12,
-    color: '#64748b',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
 
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   glassPanel: {
-    width: (contentWidth - 44) / 2, // Accounting for paddings and gaps
+    width: '48%',
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
@@ -604,7 +604,7 @@ const styles = StyleSheet.create({
   gaugeLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748b',
+    color: Colors.textSecondary,
     flex: 1,
   },
   scoreBadge: {
@@ -630,10 +630,11 @@ const styles = StyleSheet.create({
   gaugeCenterPct: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: Colors.text,
   },
   gaugeDesc: {
     fontSize: 10,
-    color: '#64748b',
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
 
@@ -643,11 +644,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   distCard: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.surface,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
   },
   distHeader: {
     flexDirection: 'row',
@@ -657,25 +658,25 @@ const styles = StyleSheet.create({
   distLabel: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
   distTotal: {
     fontSize: 11,
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
   distBarContainer: {
     flexDirection: 'row',
     height: 8,
     borderRadius: 4,
     overflow: 'hidden',
-    backgroundColor: '#e2e8f0',
+    backgroundColor: Colors.border,
   },
   distSegment: {
     height: '100%',
   },
   distEmpty: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: Colors.textMuted,
   },
   distLegendRow: {
     flexDirection: 'row',
@@ -694,7 +695,7 @@ const styles = StyleSheet.create({
   },
   distLegendText: {
     fontSize: 10,
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
 
   // Alerts
@@ -704,7 +705,7 @@ const styles = StyleSheet.create({
   alertsSectionTitle: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#94a3b8',
+    color: Colors.textMuted,
     marginBottom: 10,
   },
   alertList: {
@@ -713,11 +714,11 @@ const styles = StyleSheet.create({
   alertBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.bgCard,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
     gap: 12,
   },
   alertTextContent: {
@@ -726,10 +727,11 @@ const styles = StyleSheet.create({
   alertTitle: {
     fontSize: 13,
     fontWeight: '600',
+    color: Colors.text,
   },
   alertDesc: {
     fontSize: 12,
-    color: '#64748b',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
 
@@ -751,11 +753,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.surface,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
   },
   statusLeft: {
     flexDirection: 'row',
@@ -766,20 +768,20 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#22c55e',
+    backgroundColor: Colors.success,
   },
   statusName: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#0f172a',
+    color: Colors.text,
   },
   statusState: {
     fontSize: 11,
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
   statusPing: {
     fontSize: 11,
     fontFamily: 'Courier',
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
 });

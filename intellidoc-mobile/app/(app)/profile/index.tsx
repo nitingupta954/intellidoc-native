@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Text from '../../../src/components/Text';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Modal, ActivityIndicator, Platform } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -13,42 +13,33 @@ import { formatCredits } from '../../../src/lib/formatting';
 export default function ProfileScreen() {
   const { user, logout, isLoading } = useSessionStore();
   const { walletBalance, isBYOK, fetchWalletBalance } = useChatStore();
+  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 
   useEffect(() => {
     fetchWalletBalance();
   }, []);
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out', 
-          style: 'destructive', 
-          onPress: async () => {
-            try {
-              await logout();
-            } catch (e) {
-              console.log('Logout API error:', e);
-            }
-            
-            // Clear other stores regardless of API success
-            useWorkspaceStore.setState({ workspaces: [], activeWorkspaceId: null });
-            useChatStore.setState({ 
-              conversations: [], 
-              messages: [],
-              activeConversationId: null,
-              walletBalance: null 
-            });
+  const performLogout = async () => {
+    setIsLogoutModalVisible(false);
+    try {
+      await logout();
+    } catch (e) {
+      console.log('Logout API error:', e);
+    }
+    // Clear other stores regardless of API success
+    useWorkspaceStore.setState({ workspaces: [], activeWorkspaceId: null });
+    useChatStore.setState({ 
+      conversations: [], 
+      messages: [],
+      activeConversationId: null,
+      walletBalance: null 
+    });
+    // Explicitly force navigation
+    router.replace('/(auth)/login');
+  };
 
-            // Explicitly force navigation
-            router.replace('/(auth)/login');
-          } 
-        },
-      ]
-    );
+  const handleLogout = () => {
+    setIsLogoutModalVisible(true);
   };
 
   return (
@@ -127,17 +118,40 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Logout */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} disabled={isLoading}>
-          {isLoading ? (
-             <ActivityIndicator size="small" color={Colors.error} />
-          ) : (
-             <Text style={styles.logoutText}>Sign Out</Text>
-          )}
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
         
         <Text style={styles.version}>IntelliDoc Mobile v1.0.0</Text>
       </ScrollView>
+
+      <Modal
+        visible={isLogoutModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsLogoutModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Sign Out</Text>
+            <Text style={styles.modalMessage}>Are you sure you want to sign out?</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalCancelButton]} 
+                onPress={() => setIsLogoutModalVisible(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalLogoutButton]} 
+                onPress={performLogout}
+              >
+                <Text style={styles.modalLogoutText}>Sign Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -210,4 +224,59 @@ const styles = StyleSheet.create({
   },
   logoutText: { color: Colors.error, fontSize: 16, fontWeight: '700' },
   version: { textAlign: 'center', color: Colors.textMuted, fontSize: 12 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  modalMessage: {
+    fontSize: 15,
+    color: Colors.textSecondary,
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelButton: {
+    backgroundColor: `${Colors.textSecondary}22`,
+  },
+  modalCancelText: {
+    color: Colors.text,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalLogoutButton: {
+    backgroundColor: Colors.error,
+  },
+  modalLogoutText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
 });

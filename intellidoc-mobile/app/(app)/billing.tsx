@@ -195,7 +195,7 @@ export default function BillingScreen() {
 
           {payments.length === 0 ? (
             <View style={styles.emptyHistory}>
-              <Feather name="file-text" size={32} color="#cbd5e1" style={{ marginBottom: 12 }} />
+              <Feather name="file-text" size={32} color={Colors.textSecondary} style={{ marginBottom: 12 }} />
               <Text style={styles.emptyTitle}>No payments yet.</Text>
               <Text style={styles.emptyDesc}>Refill your AI credits to see transactions here.</Text>
             </View>
@@ -227,7 +227,7 @@ export default function BillingScreen() {
                     <View style={styles.orderIdRow}>
                       <Text style={styles.orderIdText}>{p.razorpayOrderId}</Text>
                       <TouchableOpacity style={styles.copyBtn} onPress={() => handleCopy(p.razorpayOrderId)}>
-                        <Feather name="copy" size={12} color="#64748b" />
+                        <Feather name="copy" size={12} color={Colors.textSecondary} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -248,13 +248,13 @@ export default function BillingScreen() {
 const styles = StyleSheet.create({
   centerContainer: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.bgDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.bgDark,
   },
   scrollContent: {
     padding: 16,
@@ -265,19 +265,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: Colors.text,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748b',
+    color: Colors.textSecondary,
     marginTop: 4,
   },
   
   // BYOK State
   byokContainer: {
-    backgroundColor: 'rgba(241, 245, 249, 0.5)',
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.5)',
+    borderColor: Colors.border,
     borderRadius: 12,
     padding: 24,
     alignItems: 'center',
@@ -286,12 +286,12 @@ const styles = StyleSheet.create({
   byokTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0f172a',
+    color: Colors.text,
     marginBottom: 8,
   },
   byokDesc: {
     fontSize: 14,
-    color: '#64748b',
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -306,11 +306,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   walletCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.bgCard,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -320,18 +320,18 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0f172a',
+    color: Colors.text,
   },
   cardSubtitle: {
     fontSize: 12,
-    color: '#64748b',
+    color: Colors.textSecondary,
     marginTop: 4,
     marginBottom: 16,
   },
   balanceValue: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: Colors.text,
   },
 
   // Token Meter
@@ -347,21 +347,21 @@ const styles = StyleSheet.create({
   usageLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#0f172a',
+    color: Colors.text,
   },
   usageValues: {
     fontSize: 12,
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
   progressBarBg: {
     height: 8,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: Colors.surface,
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#0f172a',
+    backgroundColor: Colors.primaryLight,
   },
 
   // Refill Credits
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0f172a',
+    color: Colors.text,
     marginBottom: 16,
   },
   packsRow: {
@@ -379,10 +379,10 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   packCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.bgCard,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
     width: 220,
     padding: 16,
     justifyContent: 'space-between',
@@ -398,11 +398,11 @@ const styles = StyleSheet.create({
   packTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#0f172a',
+    color: Colors.text,
   },
   packSubtitle: {
     fontSize: 11,
-    color: '#64748b',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   packBody: {
@@ -411,16 +411,16 @@ const styles = StyleSheet.create({
   packPrice: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: Colors.text,
     marginBottom: 4,
   },
   packCredits: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
   buyButton: {
-    backgroundColor: '#0f172a',
+    backgroundColor: Colors.primaryDark,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
@@ -433,10 +433,10 @@ const styles = StyleSheet.create({
 
   // Payment History
   historySection: {
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.bgCard,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
     overflow: 'hidden',
   },
   historyHeader: {
@@ -444,9 +444,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(226, 232, 240, 0.5)',
+    borderBottomColor: Colors.border,
   },
   historyTitleRow: {
     flexDirection: 'row',
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   historyCountBadge: {
-    backgroundColor: '#e2e8f0',
+    backgroundColor: Colors.border,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   historyCountText: {
     fontSize: 10,
     fontWeight: '500',
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
   emptyHistory: {
     padding: 40,
@@ -472,11 +472,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
   emptyDesc: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: Colors.textMuted,
     marginTop: 4,
   },
   historyList: {
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   historyItem: {
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(226, 232, 240, 0.5)',
+    borderBottomColor: Colors.border,
   },
   historyItemLast: {
     borderBottomWidth: 0,
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   },
   historyDate: {
     fontSize: 14,
-    color: '#0f172a',
+    color: Colors.text,
     marginBottom: 4,
   },
   historyPlanBadge: {
@@ -511,12 +511,12 @@ const styles = StyleSheet.create({
   historyPlanText: {
     fontSize: 10,
     fontWeight: '500',
-    color: '#3b82f6',
+    color: Colors.primaryLight,
   },
   historyAmount: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0f172a',
+    color: Colors.text,
     marginBottom: 4,
   },
   statusRow: {
@@ -536,11 +536,11 @@ const styles = StyleSheet.create({
   orderIdText: {
     fontSize: 11,
     fontFamily: 'Courier',
-    color: '#64748b',
+    color: Colors.textSecondary,
   },
   copyBtn: {
     padding: 4,
     borderRadius: 4,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: Colors.surface,
   },
 });

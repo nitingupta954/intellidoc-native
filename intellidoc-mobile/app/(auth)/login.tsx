@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Text from '../../src/components/Text';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 
 import { router } from 'expo-router';
@@ -8,14 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSessionStore } from '../../src/store/sessionStore';
 import { Colors } from '../../src/theme/colors';
 
-// Google Icon (SVG-equivalent using text colors for RN)
-function GoogleIcon() {
-  return (
-    <View style={styles.googleIconContainer}>
-      <Text style={[styles.googleIconLetter, { color: '#4285F4' }]}>G</Text>
-    </View>
-  );
-}
+
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -61,7 +54,7 @@ export default function LoginScreen() {
             {/* Logo */}
             <View style={styles.logoWrap}>
               <View style={styles.logoIcon}>
-                <Text style={styles.logoEmoji}>🧠</Text>
+                <Feather name="cpu" size={24} color="#3b82f6" />
               </View>
             </View>
 
@@ -139,18 +132,6 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Google Button */}
-            <TouchableOpacity style={styles.googleBtn} activeOpacity={0.8}>
-              <GoogleIcon />
-              <Text style={styles.googleBtnText}>Google</Text>
-            </TouchableOpacity>
 
             {/* Footer */}
             <View style={styles.footer}>
@@ -215,9 +196,9 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 14,
-    backgroundColor: 'rgba(30,45,90,0.08)',
+    backgroundColor: 'rgba(59,130,246,0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(30,45,90,0.15)',
+    borderColor: 'rgba(59,130,246,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },

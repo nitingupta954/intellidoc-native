@@ -30,14 +30,14 @@ async function storeTokenFromResponse(data: {
   expires: string;
   user: User;
 }): Promise<User> {
-  if (Platform.OS !== 'web') {
-    const cookie: StoredCookie = {
-      name: data.cookieName,
-      value: data.token,
-      expires: data.expires,
-    };
-    await saveSessionCookie(cookie);
-  }
+  // Always save session cookie (even on web) so we can manually send X-Mobile-Cookie
+  // to bypass cross-origin cookie issues when testing in Expo Web.
+  const cookie: StoredCookie = {
+    name: data.cookieName,
+    value: data.token,
+    expires: data.expires,
+  };
+  await saveSessionCookie(cookie);
   return data.user;
 }
 
@@ -106,11 +106,9 @@ export async function register(
 export async function getCurrentUser(): Promise<User> {
   const headers: Record<string, string> = {};
 
-  if (Platform.OS !== 'web') {
-    const storedCookie = await loadSessionCookie();
-    if (storedCookie) {
-      headers['X-Mobile-Cookie'] = `${storedCookie.name}=${storedCookie.value}`;
-    }
+  const storedCookie = await loadSessionCookie();
+  if (storedCookie) {
+    headers['X-Mobile-Cookie'] = `${storedCookie.name}=${storedCookie.value}`;
   }
 
   const res = await axios.get(`${BASE_URL}/api/auth/session`, {

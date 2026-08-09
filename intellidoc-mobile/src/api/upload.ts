@@ -3,6 +3,7 @@
 // Ported from doc_maanagement/src/hooks/use-documents.ts
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import api from './client';
 import { PickedFile, Document } from '../types';
@@ -50,19 +51,33 @@ export async function uploadDocument(
 
   opts.onProgress?.(30);
 
-  // Step 2: PUT raw bytes to S3/MinIO via FileSystem.uploadAsync
-  // This is the ONLY reliable way to send binary files from React Native.
-  const uploadResult = await FileSystem.uploadAsync(presignedUrl, file.uri, {
-    httpMethod: 'PUT',
-    // @ts-ignore: expo-file-system might not export FileSystemUploadType correctly in this version
-    uploadType: FileSystem.FileSystemUploadType?.BINARY_CONTENT ?? 0,
-    headers: {
-      'Content-Type': file.mimeType || 'application/octet-stream',
-    },
-  });
+  // Step 2: PUT raw bytes to S3/MinIO
+  // On Web, use standard fetch with the native File object.
+  // On Native (iOS/Android), use FileSystem.uploadAsync.
+  if (Platform.OS === 'web' && file.file) {
+    const uploadRes = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.mimeType || 'application/octet-stream',
+      },
+      body: file.file,
+    });
+    if (!uploadRes.ok) {
+      throw new Error(`Failed to upload to storage: HTTP ${uploadRes.status}`);
+    }
+  } else {
+    const uploadResult = await FileSystem.uploadAsync(presignedUrl, file.uri, {
+      httpMethod: 'PUT',
+      // @ts-ignore: expo-file-system might not export FileSystemUploadType correctly in this version
+      uploadType: FileSystem.FileSystemUploadType?.BINARY_CONTENT ?? 0,
+      headers: {
+        'Content-Type': file.mimeType || 'application/octet-stream',
+      },
+    });
 
-  if (uploadResult.status < 200 || uploadResult.status >= 300) {
-    throw new Error(`Failed to upload to storage: HTTP ${uploadResult.status}`);
+    if (uploadResult.status < 200 || uploadResult.status >= 300) {
+      throw new Error(`Failed to upload to storage: HTTP ${uploadResult.status}`);
+    }
   }
 
   opts.onProgress?.(80);

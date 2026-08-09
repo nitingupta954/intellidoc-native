@@ -38,11 +38,19 @@ export async function GET(req: Request) {
             content: true,
             createdAt: true,
           }
+        },
+        _count: {
+          select: { messages: true }
         }
       }
     });
 
-    return NextResponse.json({ conversations });
+    const mappedConversations = conversations.map(c => ({
+      ...c,
+      messageCount: c._count?.messages || 0,
+    }));
+
+    return NextResponse.json({ conversations: mappedConversations });
   } catch (error) {
     console.error('Failed to fetch conversations:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

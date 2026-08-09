@@ -45,6 +45,7 @@ export default function UploadScreen() {
         name: asset.name,
         mimeType: asset.mimeType ?? 'application/octet-stream',
         size: asset.size ?? 0,
+        file: Platform.OS === 'web' ? (asset as any).file : undefined,
       });
     } catch (e) {
       Alert.alert('Error', 'Failed to pick document.');

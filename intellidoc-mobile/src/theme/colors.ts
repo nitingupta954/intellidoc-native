@@ -1,22 +1,22 @@
 export const Colors = {
-  // Brand — Modern Indigo
-  primary: '#4f46e5',        // indigo-600
-  primaryLight: '#6366f1',   // indigo-500
-  primaryDark: '#3730a3',    // indigo-800
-  accent: '#8b5cf6',         // violet-500
+  // Brand — Modern Indigo / Blue
+  primary: '#3b82f6',        // blue-500
+  primaryLight: '#60a5fa',   // blue-400
+  primaryDark: '#2563eb',    // blue-600
+  accent: '#a78bfa',         // violet-400
 
-  // Backgrounds — Premium Slate
-  bgDark: '#f8fafc',         // slate-50 (overall app background)
-  bgCard: '#ffffff',         // white cards
-  bgCardLight: '#ffffff',
-  surface: '#f1f5f9',        // slate-100 (for subtle elevations)
+  // Backgrounds — Premium Dark Slate
+  bgDark: '#334155',         // slate-700 (overall app background, matches landing)
+  bgCard: '#1e293b',         // slate-800 (cards on the dark bg)
+  bgCardLight: '#475569',    // slate-600
+  surface: '#475569',        // slate-600 (for subtle elevations)
 
-  authBg: '#0f172a',         // slate-900
+  authBg: '#334155',         // slate-700
 
   // Text
-  text: '#0f172a',           // slate-900
-  textSecondary: '#475569',  // slate-600
-  textMuted: '#64748b',      // slate-500
+  text: '#ffffff',           // white
+  textSecondary: '#cbd5e1',  // slate-300
+  textMuted: '#94a3b8',      // slate-400
 
   // Status
   success: '#10b981',        // emerald-500
@@ -25,24 +25,24 @@ export const Colors = {
   info: '#3b82f6',           // blue-500
 
   // Document status
-  statusPending: '#64748b',  
-  statusProcessing: '#4f46e5',
+  statusPending: '#94a3b8',  
+  statusProcessing: '#60a5fa',
   statusIndexed: '#10b981',
   statusError: '#ef4444',
 
   // Borders
-  border: '#e2e8f0',         // slate-200
-  borderFocus: 'rgba(79, 70, 229, 0.3)',
+  border: 'rgba(255, 255, 255, 0.15)', // light translucent border
+  borderFocus: 'rgba(59, 130, 246, 0.4)',
 
   // Overlays
-  overlay: 'rgba(15, 23, 42, 0.6)',
-  glass: 'rgba(255,255,255,0.85)',
+  overlay: 'rgba(15, 23, 42, 0.8)',
+  glass: 'rgba(30, 41, 59, 0.85)',
 
   // Stat card icon colors
-  blue: '#3b82f6',
-  purple: '#8b5cf6',
-  amber: '#f59e0b',
-  teal: '#14b8a6',
+  blue: '#60a5fa',
+  purple: '#a78bfa',
+  amber: '#fbbf24',
+  teal: '#2dd4bf',
 };
 
 export const DarkColors = {

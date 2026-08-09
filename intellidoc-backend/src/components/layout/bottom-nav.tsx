@@ -36,16 +36,15 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] transition-colors ${
-                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] transition-colors ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  }`}
               >
                 {item.icon}
                 <span className="text-[10px] mt-1 font-medium">{item.label}</span>
               </Link>
             );
           })}
-          
+
           <button
             onClick={() => setShowModal(true)}
             className="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] transition-colors text-muted-foreground hover:text-foreground"
@@ -64,14 +63,14 @@ export function BottomNav() {
               Are you sure you want to sign out of IntelliDoc?
             </p>
             <div className="flex items-center justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setShowModal(false)}
                 disabled={isLoggingOut}
                 className="px-4 py-2 text-sm font-medium rounded-lg border border-border hover:bg-muted transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-destructive text-white hover:bg-destructive/90 transition-colors cursor-pointer flex items-center justify-center min-w-[90px] disabled:opacity-50 disabled:cursor-not-allowed"

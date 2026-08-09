@@ -72,18 +72,15 @@ export async function streamPost(
     Accept: 'text/event-stream',
   };
 
-  // On web the browser manages cookies automatically — we just need credentials:'include'.
-  // On native we manually inject the session cookie from SecureStore.
   let credentials: RequestCredentials = 'include';
-  if (typeof navigator !== 'undefined' && navigator.product !== 'ReactNative') {
-    // Web: browser handles cookies via credentials:'include'
-    credentials = 'include';
-  } else {
-    // Native: manually set cookie header
-    const cookie = await loadSessionCookie();
-    if (cookie) {
-      headers['Cookie'] = `${cookie.name}=${cookie.value}`;
-    }
+  
+  // To bypass cross-origin SameSite=Lax cookie drops in Expo Web, 
+  // always send the X-Mobile-Cookie header if we have a cookie.
+  const cookie = await loadSessionCookie();
+  if (cookie) {
+    headers['X-Mobile-Cookie'] = `${cookie.name}=${cookie.value}`;
+    // Also set native Cookie header for physical devices
+    headers['Cookie'] = `${cookie.name}=${cookie.value}`;
   }
 
   const response = await expoFetch(`${BASE_URL}${path}`, {

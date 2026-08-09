@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Text from '../../src/components/Text';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 
 import { router } from 'expo-router';
@@ -55,7 +55,7 @@ export default function RegisterScreen() {
             {/* Logo */}
             <View style={styles.logoWrap}>
               <View style={[styles.logoIcon, { backgroundColor: 'rgba(59,130,246,0.1)', borderColor: 'rgba(59,130,246,0.2)' }]}>
-                <Text style={styles.logoEmoji}>🧠</Text>
+                <Feather name="cpu" size={24} color="#3b82f6" />
               </View>
             </View>
 

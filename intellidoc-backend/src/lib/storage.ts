@@ -5,6 +5,7 @@ const s3 = new S3Client({
   region: process.env.AWS_REGION || 'us-east-1',
   ...(process.env.S3_ENDPOINT ? { endpoint: process.env.S3_ENDPOINT } : {}),
   forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true', // Required for MinIO
+  requestChecksumCalculation: "WHEN_REQUIRED",
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy'

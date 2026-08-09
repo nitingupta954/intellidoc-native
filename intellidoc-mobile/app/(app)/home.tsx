@@ -208,10 +208,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.topBarRight}>
-            {/* Theme toggle placeholder */}
-            <TouchableOpacity style={styles.themeBtn}>
-              <Text style={styles.themeBtnIcon}>☀</Text>
-            </TouchableOpacity>
+
             {/* Workspace selector */}
             <WorkspaceSelector />
           </View>
@@ -310,7 +307,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: Colors.bgDark,
   },
   scroll: { flex: 1 },
   content: { paddingBottom: 32 },
@@ -343,25 +340,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  themeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  themeBtnIcon: {
-    fontSize: 16,
-  },
   workspaceBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.bgCard,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -378,12 +362,12 @@ const styles = StyleSheet.create({
   workspaceName: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0f172a',
+    color: Colors.text,
     flex: 1,
   },
   workspaceChevron: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: Colors.textMuted,
   },
 
   // Heading
@@ -395,12 +379,12 @@ const styles = StyleSheet.create({
   dashboardTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#0f172a',
+    color: Colors.text,
     letterSpacing: -0.5,
   },
   dashboardSubtitle: {
     fontSize: 14,
-    color: '#64748b',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
 
@@ -434,11 +418,11 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '47%',
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.bgCard,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -453,7 +437,7 @@ const styles = StyleSheet.create({
   },
   statCardTitle: {
     fontSize: 12,
-    color: '#64748b',
+    color: Colors.textSecondary,
     fontWeight: '500',
     flex: 1,
     lineHeight: 16,
@@ -471,7 +455,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#0f172a',
+    color: Colors.text,
     letterSpacing: -0.5,
     marginBottom: 6,
   },
@@ -484,7 +468,7 @@ const styles = StyleSheet.create({
   },
   statChangeText: {
     fontSize: 11,
-    color: '#16a34a',
+    color: Colors.success,
     fontWeight: '600',
   },
 
@@ -502,18 +486,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0f172a',
+    color: Colors.text,
   },
   viewAll: {
     fontSize: 13,
-    color: '#64748b',
+    color: Colors.textSecondary,
     fontWeight: '500',
   },
   activityCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.bgCard,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: Colors.border,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -530,13 +514,13 @@ const styles = StyleSheet.create({
   },
   activityRowBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: Colors.border,
   },
   activityIconBox: {
     width: 34,
     height: 34,
     borderRadius: 8,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -544,23 +528,23 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0f172a',
+    color: Colors.text,
     marginBottom: 2,
   },
   activityMeta: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: Colors.textMuted,
   },
   emptyText: {
     fontSize: 13,
-    color: '#94a3b8',
+    color: Colors.textMuted,
     textAlign: 'center',
     paddingVertical: 20,
   },
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: Colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -568,7 +552,7 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.bgCard,
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -580,7 +564,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0f172a',
+    color: Colors.text,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -592,25 +576,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     marginBottom: 8,
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.surface,
   },
   workspaceItemActive: {
-    backgroundColor: 'rgba(30,45,90,0.08)',
+    backgroundColor: 'rgba(59,130,246,0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(30,45,90,0.1)',
+    borderColor: 'rgba(59,130,246,0.2)',
   },
   workspaceItemText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#334155',
+    color: Colors.text,
   },
   workspaceItemTextActive: {
-    color: '#1e2d5a',
+    color: Colors.primaryLight,
     fontWeight: '700',
   },
   workspaceItemCheck: {
     fontSize: 16,
-    color: '#1e2d5a',
+    color: Colors.primaryLight,
     fontWeight: '700',
   },
 });

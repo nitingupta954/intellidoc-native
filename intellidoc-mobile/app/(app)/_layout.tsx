@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Tabs, Redirect, router } from 'expo-router';
 import Text from '../../src/components/Text';
-import { View, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 
 import { useSessionStore } from '../../src/store/sessionStore';
 import { useWorkspaceStore } from '../../src/store/workspaceStore';
@@ -11,7 +11,7 @@ import { Feather } from '@expo/vector-icons';
 function TabIcon({ name, focused }: { name: React.ComponentProps<typeof Feather>['name']; focused: boolean }) {
   return (
     <View style={[styles.tabIconWrap, focused && styles.tabIconActive]}>
-      <Feather name={name} size={22} color={focused ? Colors.primary : '#94a3b8'} />
+      <Feather name={name} size={22} color={focused ? Colors.primary : Colors.textMuted} />
     </View>
   );
 }
@@ -40,13 +40,13 @@ export default function AppLayout() {
   }
 
   return (
-    <View style={{ flex: 1, paddingTop: 40, backgroundColor: Colors.bgDark }}>
+    <View style={{ flex: 1, backgroundColor: Colors.bgDark }}>
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: styles.tabBar,
           tabBarActiveTintColor: Colors.primary,
-          tabBarInactiveTintColor: '#94a3b8',
+          tabBarInactiveTintColor: Colors.textMuted,
           tabBarLabelStyle: styles.tabLabel,
           tabBarShowLabel: true,
         }}
@@ -109,16 +109,8 @@ export default function AppLayout() {
         />
         <Tabs.Screen
           name="logout"
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              logout();
-            },
-          }}
           options={{
-            href: '/(app)/home',
-            title: 'Logout',
-            tabBarIcon: ({ focused }) => <TabIcon name="log-out" focused={focused} />,
+            href: null,
           }}
         />
         <Tabs.Screen
@@ -129,6 +121,12 @@ export default function AppLayout() {
         />
         <Tabs.Screen
           name="documents/[id]"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="knowledge-bases/[id]"
           options={{
             href: null,
           }}
@@ -165,21 +163,21 @@ export default function AppLayout() {
 const styles = StyleSheet.create({
   loading: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: Colors.bgDark,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 16,
   },
   loadingText: {
-    color: '#64748b',
+    color: Colors.textMuted,
     fontSize: 15,
   },
   tabBar: {
-    backgroundColor: '#ffffff',
-    borderTopColor: '#e2e8f0',
+    backgroundColor: Colors.bgCard,
+    borderTopColor: Colors.border,
     borderTopWidth: 1,
-    height: 80,
-    paddingBottom: 24, // added extra padding for safe area
+    height: Platform.OS === 'ios' ? 85 : 70, // dynamic height for different platforms
+    paddingBottom: Platform.OS === 'ios' ? 24 : 10, // less padding on web/android
     paddingTop: 8,
   },
   tabLabel: {
@@ -195,6 +193,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabIconActive: {
-    backgroundColor: 'rgba(30,45,90,0.08)',
+    backgroundColor: 'rgba(59,130,246,0.1)',
   },
 });

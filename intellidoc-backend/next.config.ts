@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 
+// Ignore Next.js client abort ECONNRESET globally
+process.on('uncaughtException', (err: any) => {
+  if (err && err.code === 'ECONNRESET' && err.message === 'aborted') {
+    return;
+  }
+  console.error('Unhandled Exception:', err);
+});
+
 const nextConfig: NextConfig = {
-  // Allow external images (Google/GitHub avatars, Cloudflare R2 assets)
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
@@ -9,8 +16,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.r2.cloudflarestorage.com" },
     ],
   },
-
-  // Node.js-native packages that must not be bundled into serverless functions
   serverExternalPackages: [
     "@prisma/client",
     "bcryptjs",
@@ -21,7 +26,6 @@ const nextConfig: NextConfig = {
     "razorpay",
     "pdf-parse",
   ],
-
   eslint: {
     ignoreDuringBuilds: true,
   },
