@@ -20,6 +20,13 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "apiUrl": "http://localhost:3000",
+      "router": {},
+      "eas": {
+        "projectId": "a1c11814-13f9-44f8-945d-3b2ccc377b2b"
+      }
     }
   }
 }

@@ -1,6 +1,4 @@
-import { ExpoConfig, ConfigContext } from 'expo/config';
-
-export default ({ config }: ConfigContext): ExpoConfig => ({
+module.exports = ({ config }) => ({
   ...config,
   name: 'IntelliDoc',
   slug: 'intellidoc-mobile',
@@ -21,7 +19,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: './assets/adaptive-icon.png',
+      foregroundImage: './assets/android-icon-foreground.png',
+      backgroundImage: './assets/android-icon-background.png',
+      monochromeImage: './assets/android-icon-monochrome.png',
       backgroundColor: '#0f0f23',
     },
     package: 'com.intellidoc.mobile',
@@ -50,7 +50,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
     eas: {
-      projectId: 'your-eas-project-id', // update after eas init
-    },
+      projectId: "a1c11814-13f9-44f8-945d-3b2ccc377b2b"
+    }
   },
 });
