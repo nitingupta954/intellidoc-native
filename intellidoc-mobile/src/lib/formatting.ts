@@ -49,6 +49,7 @@ export function formatDate(dateStr?: string | null): string {
 export function statusLabel(status: string): string {
   const labels: Record<string, string> = {
     PENDING: 'Queued',
+    UPLOADED: 'Uploaded',
     PROCESSING: 'Processing',
     INDEXED: 'Ready',
     ERROR: 'Failed',

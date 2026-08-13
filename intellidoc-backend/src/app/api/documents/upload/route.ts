@@ -43,7 +43,32 @@ export async function POST(req: Request) {
     });
 
     // 3. Publish to RabbitMQ
-    await publishDocumentJob(document.id, uniqueFileName, session.user.id, workspaceId);
+    const minioPath = `minio://${process.env.S3_BUCKET_NAME || "intellidoc-documents"}/${uniqueFileName}`;
+    try {
+      await publishDocumentJob(document.id, minioPath, session.user.id, workspaceId);
+    } catch (mqError) {
+      console.error("Failed to push job to RabbitMQ:", mqError);
+      console.log("Falling back to HTTP async processing...");
+      try {
+        const aiServiceUrl = process.env.AI_SERVICE_URL || "http://localhost:8000";
+        fetch(`${aiServiceUrl}/documents/process`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            document_id: document.id,
+            file_path: minioPath,
+            workspace_id: workspaceId,
+            knowledge_base_id: null,
+            uploaded_by: session.user.id,
+            metadata: {}
+          })
+        }).catch(err => console.error("HTTP fallback failed:", err));
+      } catch (httpError) {
+        console.error("HTTP fallback failed:", httpError);
+      }
+    }
 
     return NextResponse.json({ success: true, document });
   } catch (error: any) {

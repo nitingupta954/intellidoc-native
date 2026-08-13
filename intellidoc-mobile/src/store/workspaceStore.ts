@@ -15,6 +15,7 @@ interface WorkspaceState {
   workspaces: Workspace[];
   activeWorkspaceId: string | null;
   isLoading: boolean;
+  isBootstrapping: boolean;
   error: string | null;
 
   loadWorkspaces: () => Promise<void>;
@@ -27,6 +28,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   workspaces: [],
   activeWorkspaceId: null,
   isLoading: false,
+  isBootstrapping: false,
   error: null,
 
   loadWorkspaces: async () => {
@@ -76,11 +78,17 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
    * Called after login, before rendering the main app tabs.
    */
   bootstrapWorkspace: async () => {
-    const { loadWorkspaces, createAndSetWorkspace } = get();
-    await loadWorkspaces();
-    const { workspaces } = get();
-    if (workspaces.length === 0) {
-      await createAndSetWorkspace('My Workspace');
+    if (get().isBootstrapping) return;
+    set({ isBootstrapping: true });
+    try {
+      const { loadWorkspaces, createAndSetWorkspace } = get();
+      await loadWorkspaces();
+      const { workspaces } = get();
+      if (workspaces.length === 0) {
+        await createAndSetWorkspace('My Workspace');
+      }
+    } finally {
+      set({ isBootstrapping: false });
     }
   },
 }));

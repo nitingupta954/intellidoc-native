@@ -10,6 +10,7 @@ import { useWorkspaceStore } from '../../../src/store/workspaceStore';
 import { useChatStore } from '../../../src/store/chatStore';
 import { Colors } from '../../../src/theme/colors';
 import MarkdownView from '../../../src/components/MarkdownView';
+import { VoiceInputButton } from '../../../src/components/VoiceInputButton';
 import { Message, CragConfirmation } from '../../../src/types';
 import { formatConfidenceScore } from '../../../src/lib/formatting';
 import { fetchDocuments } from '../../../src/api/documents';
@@ -244,6 +245,10 @@ export default function ChatScreen() {
 
         {/* Input area */}
         <View style={styles.inputArea}>
+          <VoiceInputButton 
+            onTranscript={(text) => setInput(prev => prev ? prev + ' ' + text : text)}
+            disabled={(!resolvedDocId && !resolvedKbId)}
+          />
           <TextInput
             style={styles.input}
             placeholder={(!resolvedDocId && !resolvedKbId) ? "Select a document to chat" : "Type a message..."}

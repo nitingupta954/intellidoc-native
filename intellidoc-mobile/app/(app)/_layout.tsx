@@ -62,7 +62,7 @@ export default function AppLayout() {
         <Tabs.Screen
           name="stats"
           options={{
-            href: '/(app)/stats', // Might need to create this screen
+            href: null, // Might need to create this screen
             title: 'Stats',
             tabBarIcon: ({ focused }) => <TabIcon name="bar-chart-2" focused={focused} />,
           }}

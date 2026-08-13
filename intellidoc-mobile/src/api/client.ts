@@ -9,14 +9,9 @@ import axios from 'axios';
 import { loadSessionCookie, clearSessionCookie } from '../lib/secureStore';
 import { router } from 'expo-router';
 
-// On web (browser), always use localhost so the browser doesn't depend on the
-// machine's network IP (which changes across sessions/networks).
-// On native (iOS/Android), use the IP from .env so the physical device can reach
-// the dev server on the local network.
-const BASE_URL =
-  typeof window !== 'undefined' && typeof document !== 'undefined'
-    ? 'http://localhost:3000'                                      // web browser
-    : (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000'); // native
+// On both web and native, use the URL from .env (e.g. production Vercel URL).
+// Only fallback to localhost if the env variable is completely missing.
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 const api = axios.create({
   baseURL: BASE_URL,

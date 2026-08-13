@@ -19,6 +19,7 @@ import {
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: Colors.statusPending,
+  UPLOADED: Colors.statusPending,
   PROCESSING: Colors.statusProcessing,
   INDEXED: Colors.statusIndexed,
   ERROR: Colors.statusError,
@@ -42,8 +43,9 @@ export default function DocumentsScreen() {
     refetchInterval: (query) => {
       const docs = query.state.data ?? [];
       const hasPending = docs.some(
-        (d: Document) => d.status === 'PENDING' || d.status === 'PROCESSING',
+        (d: Document) => d.status === 'PENDING' || d.status === 'UPLOADED' || d.status === 'PROCESSING',
       );
+      console.log('[DEBUG] refetchInterval checked. hasPending:', hasPending, 'docs count:', docs.length);
       return hasPending ? 3000 : false; // Poll 3s while any doc is processing
     },
     staleTime: 10_000,
@@ -98,16 +100,16 @@ export default function DocumentsScreen() {
           <Text style={styles.docName} numberOfLines={1}>
             {item.filename}
           </Text>
-          {item.status === 'PROCESSING' && item.currentStep ? (
+          {(item.status === 'PROCESSING' || item.status === 'UPLOADED') ? (
             <Text style={styles.docStep} numberOfLines={1}>
-              ⚙️ {item.currentStep}
+              ⚙️ {item.currentStep ?? 'Processing...'}
             </Text>
           ) : (
             <Text style={styles.docMeta}>
               {formatFileSize(item.fileSize)} · {formatDate(item.createdAt)}
             </Text>
           )}
-          {item.status === 'PROCESSING' && (
+          {(item.status === 'PROCESSING' || item.status === 'UPLOADED') && (
             <View style={styles.progressBar}>
               <View
                 style={[

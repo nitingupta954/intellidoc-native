@@ -37,8 +37,8 @@ export async function POST(req: Request) {
     const document = dbRecord.data;
 
     // Trigger RabbitMQ Job
+    const minioPath = `minio://${process.env.S3_BUCKET_NAME || "intellidoc-documents"}/${document.storageKey}`;
     try {
-      const minioPath = `minio://${process.env.S3_BUCKET_NAME || "intellidoc-documents"}/${document.storageKey}`;
       await publishDocumentJob(
         document.id,
         minioPath,
@@ -49,6 +49,27 @@ export async function POST(req: Request) {
     } catch (mqError) {
       console.error("Failed to push job to RabbitMQ:", mqError);
       // We don't fail the upload if MQ is temporarily down, but log it.
+      console.log("Falling back to HTTP async processing...");
+      try {
+        // AI service typically runs on 8000 locally, and the endpoint requires /api/v1
+        const aiServiceBase = process.env.AI_SERVICE_URL?.replace(':8001', ':8000') || "http://localhost:8000";
+        fetch(`${aiServiceBase}/api/v1/documents/process`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            document_id: document.id,
+            file_path: minioPath,
+            workspace_id: document.workspaceId,
+            knowledge_base_id: document.knowledgeBaseId || null,
+            uploaded_by: session.user.id,
+            metadata: {}
+          })
+        }).catch(err => console.error("HTTP fallback failed:", err));
+      } catch (httpError) {
+        console.error("HTTP fallback failed:", httpError);
+      }
     }
 
     return NextResponse.json({ success: true, document });

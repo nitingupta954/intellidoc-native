@@ -4,14 +4,14 @@ import { Document, Folder } from '../types';
 // ── Documents ─────────────────────────────────────────────────
 
 export async function fetchDocuments(workspaceId: string, knowledgeBaseId?: string): Promise<Document[]> {
-  let url = `/api/documents?workspaceId=${workspaceId}`;
+  let url = `/api/documents?workspaceId=${workspaceId}&_t=${Date.now()}`;
   if (knowledgeBaseId) url += `&knowledgeBaseId=${knowledgeBaseId}`;
   const res = await api.get(url);
   return res.data.documents ?? [];
 }
 
 export async function fetchDocument(id: string): Promise<Document> {
-  const res = await api.get(`/api/documents/${id}`);
+  const res = await api.get(`/api/documents/${id}?_t=${Date.now()}`);
   return res.data.document;
 }
 

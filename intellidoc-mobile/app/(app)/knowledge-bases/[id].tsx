@@ -15,6 +15,7 @@ import { formatFileSize, formatMimeType, formatDate, statusLabel } from '../../.
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: Colors.statusPending,
+  UPLOADED: Colors.statusPending,
   PROCESSING: Colors.statusProcessing,
   INDEXED: Colors.statusIndexed,
   ERROR: Colors.statusError,
@@ -50,7 +51,7 @@ export default function KnowledgeBaseDetailScreen() {
     refetchInterval: (query) => {
       const currentDocs = query.state.data ?? [];
       const hasPending = currentDocs.some(
-        (d: Document) => d.status === 'PENDING' || d.status === 'PROCESSING',
+        (d: Document) => d.status === 'PENDING' || d.status === 'UPLOADED' || d.status === 'PROCESSING',
       );
       return hasPending ? 3000 : false;
     },
@@ -111,17 +112,26 @@ export default function KnowledgeBaseDetailScreen() {
         </View>
 
         <View style={styles.docInfo}>
-          <Text style={styles.docName} numberOfLines={1}>{item.filename}</Text>
-          {item.status === 'PROCESSING' && item.currentStep ? (
-            <Text style={styles.docStep} numberOfLines={1}>⚙️ {item.currentStep}</Text>
+          <Text style={styles.docName} numberOfLines={1}>
+            {item.filename}
+          </Text>
+          {(item.status === 'PROCESSING' || item.status === 'UPLOADED') ? (
+            <Text style={styles.docStep} numberOfLines={1}>
+              ⚙️ {item.currentStep ?? 'Processing...'}
+            </Text>
           ) : (
             <Text style={styles.docMeta}>
               {formatFileSize(item.fileSize)} · {formatDate(item.createdAt)}
             </Text>
           )}
-          {item.status === 'PROCESSING' && (
+          {(item.status === 'PROCESSING' || item.status === 'UPLOADED') && (
             <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${item.progress ?? 10}%` }]} />
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${item.progress ?? 10}%` },
+                ]}
+              />
             </View>
           )}
         </View>

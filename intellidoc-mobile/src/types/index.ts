@@ -10,7 +10,7 @@ export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
 export type SubscriptionStatus = 'ACTIVE' | 'CANCELLED' | 'EXPIRED' | 'PENDING';
 export type WorkspaceRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
-export type DocumentStatus = 'PENDING' | 'PROCESSING' | 'INDEXED' | 'ERROR' | 'CANCELLED';
+export type DocumentStatus = 'PENDING' | 'UPLOADED' | 'PROCESSING' | 'INDEXED' | 'ERROR' | 'CANCELLED';
 export type CreditTxType = 'SIGNUP_GRANT' | 'PURCHASE' | 'DEBIT_CHAT' | 'DEBIT_EMBEDDING' | 'DEBIT_VOICE' | 'DEBIT_SUMMARY' | 'REFUND' | 'ADJUSTMENT';
 
 // ── User ─────────────────────────────────────────────────────

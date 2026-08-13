@@ -3,6 +3,7 @@ import os
 import tempfile
 import boto3
 import httpx
+import asyncio
 from typing import Optional
 from core.config import settings
 from parsers.document_parser import DocumentParser
@@ -59,14 +60,14 @@ async def process_document_pipeline(
             ext = ".pdf" 
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
-            s3.download_file(settings.S3_BUCKET, object_key, tmp_file.name)
+            await asyncio.to_thread(s3.download_file, settings.S3_BUCKET, object_key, tmp_file.name)
             local_path = tmp_file.name
             
         logger.info(f"Downloaded to local path: {local_path}")
         
         # 1. Parse
         await update_document_status(document_id, {"currentStep": "Parsing Document", "progress": 30})
-        elements = parser.parse_document(local_path)
+        elements = await asyncio.to_thread(parser.parse_document, local_path)
         
         for el in elements:
             if "metadata" not in el:
@@ -79,7 +80,7 @@ async def process_document_pipeline(
             
         # 2. Chunk
         await update_document_status(document_id, {"currentStep": "Chunking text", "progress": 50})
-        chunks = chunker.chunk_documents(elements)
+        chunks = await asyncio.to_thread(chunker.chunk_documents, elements)
         logger.info(f"Created {len(chunks)} chunks for {document_id}")
         
         if not chunks:

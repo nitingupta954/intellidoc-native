@@ -11,6 +11,7 @@ import { statusLabel, formatFileSize, formatDate, formatMimeType } from '../../.
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: Colors.statusPending,
+  UPLOADED: Colors.statusPending,
   PROCESSING: Colors.statusProcessing,
   INDEXED: Colors.statusIndexed,
   ERROR: Colors.statusError,
@@ -24,8 +25,8 @@ export default function DocumentDetailScreen() {
     queryFn: () => fetchDocument(id!),
     enabled: !!id,
     refetchInterval: (query) => {
-      const d = query.state.data;
-      return d?.status === 'PENDING' || d?.status === 'PROCESSING' ? 3000 : false;
+      const d = query.state.data as any;
+      return d?.status === 'PENDING' || d?.status === 'UPLOADED' || d?.status === 'PROCESSING' ? 3000 : false;
     },
   });
 
@@ -75,11 +76,16 @@ export default function DocumentDetailScreen() {
           </View>
 
           {/* Processing progress */}
-          {doc.status === 'PROCESSING' && (
+          {(doc.status === 'PROCESSING' || doc.status === 'UPLOADED') && (
             <View style={styles.progressSection}>
               <Text style={styles.progressStep}>⚙️ {doc.currentStep ?? 'Processing…'}</Text>
               <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${doc.progress ?? 10}%` }]} />
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${doc.progress ?? 10}%` },
+                  ]}
+                />
               </View>
               <Text style={styles.progressPct}>{doc.progress ?? 0}%</Text>
             </View>

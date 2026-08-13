@@ -64,7 +64,9 @@ export default function UploadScreen() {
       });
       // Invalidate so list shows the new PENDING document
       queryClient.invalidateQueries({ queryKey: ['documents', activeWorkspaceId] });
-      router.replace('/(app)/documents');
+      setIsUploading(false);
+      setFile(null);
+      router.back();
     } catch (e: any) {
       Alert.alert('Upload Failed', e?.message ?? 'An error occurred.');
       setIsUploading(false);
