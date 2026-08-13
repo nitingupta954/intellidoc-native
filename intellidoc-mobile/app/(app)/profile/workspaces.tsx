@@ -8,10 +8,32 @@ import { useWorkspaceStore } from '../../../src/store/workspaceStore';
 import { Colors } from '../../../src/theme/colors';
 
 export default function WorkspacesScreen() {
-  const { workspaces, activeWorkspaceId, setActiveWorkspace, createAndSetWorkspace } = useWorkspaceStore();
+  const { workspaces, activeWorkspaceId, setActiveWorkspace, createAndSetWorkspace, deleteWorkspace } = useWorkspaceStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  const handleDeleteWorkspace = (id: string, name: string) => {
+    Alert.alert(
+      "Delete Workspace",
+      `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              await deleteWorkspace(id);
+              Alert.alert("Success", "Workspace deleted.");
+            } catch (err: any) {
+              Alert.alert("Error", err.message || "Failed to delete workspace");
+            }
+          } 
+        }
+      ]
+    );
+  };
 
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim()) return;
@@ -68,6 +90,14 @@ export default function WorkspacesScreen() {
                   <View style={styles.activeBadge}>
                     <Text style={styles.activeBadgeText}>Active</Text>
                   </View>
+                )}
+                {ws.role === 'OWNER' && (
+                  <TouchableOpacity 
+                    style={{ padding: 8, marginLeft: 8 }} 
+                    onPress={() => handleDeleteWorkspace(ws.id, ws.name)}
+                  >
+                    <Feather name="trash-2" size={18} color={Colors.error || '#ef4444'} />
+                  </TouchableOpacity>
                 )}
               </TouchableOpacity>
             );

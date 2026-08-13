@@ -7,7 +7,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Workspace } from '../types';
-import { fetchWorkspaces, createWorkspace } from '../api/workspaces';
+import { fetchWorkspaces, createWorkspace, deleteWorkspace as apiDeleteWorkspace } from '../api/workspaces';
 
 const ACTIVE_WS_KEY = 'intellidoc_active_workspace';
 
@@ -21,6 +21,7 @@ interface WorkspaceState {
   loadWorkspaces: () => Promise<void>;
   setActiveWorkspace: (id: string) => void;
   createAndSetWorkspace: (name: string) => Promise<Workspace>;
+  deleteWorkspace: (id: string) => Promise<void>;
   bootstrapWorkspace: () => Promise<void>;
 }
 
@@ -69,6 +70,23 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     }));
     await AsyncStorage.setItem(ACTIVE_WS_KEY, ws.id);
     return ws;
+  },
+
+  deleteWorkspace: async (id) => {
+    await apiDeleteWorkspace(id);
+    const { workspaces, activeWorkspaceId } = get();
+    const newWorkspaces = workspaces.filter(w => w.id !== id);
+    set({ workspaces: newWorkspaces });
+    
+    if (activeWorkspaceId === id) {
+      if (newWorkspaces.length > 0) {
+        set({ activeWorkspaceId: newWorkspaces[0].id });
+        await AsyncStorage.setItem(ACTIVE_WS_KEY, newWorkspaces[0].id);
+      } else {
+        set({ activeWorkspaceId: null });
+        await AsyncStorage.removeItem(ACTIVE_WS_KEY);
+      }
+    }
   },
 
   /**
