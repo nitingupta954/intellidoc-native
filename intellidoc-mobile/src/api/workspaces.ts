@@ -40,7 +40,7 @@ export async function inviteMember(
   email: string,
   role: WorkspaceRole,
 ): Promise<Invitation> {
-  const res = await api.post(`/api/workspaces/${workspaceId}/invite`, { email, role });
+  const res = await api.post(`/api/workspaces/${workspaceId}/invite`, { email, role, client: 'mobile' });
   return res.data.invitation;
 }
 

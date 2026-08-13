@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const userId = session.user.id;
     const { id: workspaceId } = await params;
-    const { email, role } = await req.json();
+    const { email, role, client } = await req.json();
 
     if (!email || !role) {
       return NextResponse.json({ error: "Email and role are required" }, { status: 400 });
@@ -62,8 +62,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     // Send email using Nodemailer
     const inviterName = session.user.name || "A team member";
-    console.log(`Sending invite email to ${email} with token: ${token}`);
-    await emailService.sendWorkspaceInvite(email, token, inviterName, workspace.name);
+    console.log(`Sending invite email to ${email} with token: ${token}, client: ${client}`);
+    await emailService.sendWorkspaceInvite(email, token, inviterName, workspace.name, client);
 
     return NextResponse.json({ invitation }, { status: 201 });
   } catch (error: any) {

@@ -146,9 +146,13 @@ export const emailService = {
     }
   },
 
-  sendWorkspaceInvite: async (email: string, token: string, inviterName: string, workspaceName: string): Promise<void> => {
+  sendWorkspaceInvite: async (email: string, token: string, inviterName: string, workspaceName: string, client?: string): Promise<void> => {
     const baseUrl = env.NEXT_PUBLIC_APP_URL || env.APP_URL;
-    const inviteLink = `${baseUrl}/invite/${token}`;
+    let inviteLink = `${baseUrl}/invite/${token}`;
+
+    if (client === 'mobile') {
+      inviteLink = `intellidoc://invite/${token}`;
+    }
 
     const mailOptions = {
       from: process.env.EMAIL_FROM || '"IntelliDoc AI" <noreply@intellidoc.ai>',

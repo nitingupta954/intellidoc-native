@@ -155,6 +155,12 @@ export default function AppLayout() {
             href: null,
           }}
         />
+        <Tabs.Screen
+          name="profile/members"
+          options={{
+            href: null,
+          }}
+        />
       </Tabs>
     </View>
   );

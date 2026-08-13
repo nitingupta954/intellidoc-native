@@ -109,6 +109,14 @@ export default function ProfileScreen() {
             <Text style={styles.chevron}>→</Text>
           </TouchableOpacity>
           <View style={styles.divider} />
+          <TouchableOpacity style={styles.row} onPress={() => router.push('/(app)/profile/members')}>
+            <View style={[styles.rowIconBox, { backgroundColor: `${Colors.primary}22` }]}>
+              <Text style={styles.rowIcon}>🤝</Text>
+            </View>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>Team Members</Text>
+            <Text style={styles.chevron}>→</Text>
+          </TouchableOpacity>
+          <View style={styles.divider} />
           <TouchableOpacity style={styles.row} onPress={() => router.push('/(app)/profile/security')}>
             <View style={[styles.rowIconBox, { backgroundColor: `${Colors.warning}22` }]}>
               <Text style={styles.rowIcon}>🔒</Text>
