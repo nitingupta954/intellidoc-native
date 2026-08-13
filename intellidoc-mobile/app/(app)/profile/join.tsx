@@ -15,7 +15,7 @@ export default function JoinWorkspaceScreen() {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const { user } = useSessionStore();
-  const { fetchWorkspaces } = useWorkspaceStore();
+  const { loadWorkspaces } = useWorkspaceStore();
 
   const handlePreview = async () => {
     const cleanCode = code.trim().toUpperCase();
@@ -42,7 +42,7 @@ export default function JoinWorkspaceScreen() {
     setAccepting(true);
     try {
       await acceptInvite(code.trim().toUpperCase());
-      await fetchWorkspaces();
+      await loadWorkspaces();
       Alert.alert('Success', 'You have joined the workspace!');
       router.replace('/(app)/home');
     } catch (e: any) {
