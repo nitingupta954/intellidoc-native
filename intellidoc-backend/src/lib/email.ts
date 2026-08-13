@@ -158,7 +158,7 @@ export const emailService = {
       from: process.env.EMAIL_FROM || '"IntelliDoc AI" <noreply@intellidoc.ai>',
       to: email,
       subject: `You have been invited to join ${workspaceName} on IntelliDoc AI`,
-      text: `${inviterName} has invited you to join the workspace "${workspaceName}". Click the following link to accept the invitation: ${inviteLink}`,
+      text: `${inviterName} has invited you to join the workspace "${workspaceName}". Use the following invite code to join: ${token}\nOr click this link: ${inviteLink}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -179,17 +179,17 @@ export const emailService = {
                       <p style="color: #4b5563; font-size: 16px; line-height: 24px; margin: 0 0 24px 0;">
                         <strong>${inviterName}</strong> has invited you to join the <strong>${workspaceName}</strong> workspace on IntelliDoc AI.
                       </p>
+
+                      <p style="color: #4b5563; font-size: 14px; line-height: 20px; margin: 0 0 8px 0;">
+                        Enter the following code in the mobile app to join:
+                      </p>
                       
-                      <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
-                        <tr>
-                          <td align="center" bgcolor="#000000" style="border-radius: 6px;">
-                            <a href="${inviteLink}" target="_blank" style="font-size: 14px; font-weight: 500; color: #ffffff; text-decoration: none; padding: 12px 24px; display: inline-block; border-radius: 6px;">Accept Invitation</a>
-                          </td>
-                        </tr>
-                      </table>
+                      <div style="background-color: #f3f4f6; border-radius: 6px; padding: 24px; text-align: center; margin-bottom: 24px;">
+                        <span style="font-size: 32px; font-weight: 700; letter-spacing: 4px; color: #1f2937;">${token}</span>
+                      </div>
                       
                       <p style="color: #6b7280; font-size: 14px; line-height: 20px; margin: 0 0 24px 0;">
-                        This invitation will expire in 7 days.
+                        Or <a href="${inviteLink}" style="color: #2563eb; text-decoration: none;">click here</a> to open it directly. This invitation will expire in 7 days.
                       </p>
                     </td>
                   </tr>
