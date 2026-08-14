@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ workspace }, { status: 201 });
+    return NextResponse.json({ workspace: { ...workspace, role: "OWNER" } }, { status: 201 });
   } catch (error: any) {
     console.error("Create workspace error:", error);
     return NextResponse.json({ error: "Failed to create workspace" }, { status: 500 });

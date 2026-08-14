@@ -85,6 +85,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       } else {
         set({ activeWorkspaceId: null });
         await AsyncStorage.removeItem(ACTIVE_WS_KEY);
+        // If the user deleted their very last workspace, recreate the default one
+        // so the app doesn't crash from a missing activeWorkspaceId
+        get().bootstrapWorkspace();
       }
     }
   },
