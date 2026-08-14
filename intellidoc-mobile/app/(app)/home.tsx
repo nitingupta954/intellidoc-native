@@ -256,22 +256,7 @@ export default function HomeScreen() {
               iconChar="💬"
               iconColor="#a855f7"
             />
-            <StatCard
-              title="Avg Confidence"
-              value="N/A"
-              change="+0%"
-              iconBg="rgba(245,158,11,0.08)"
-              iconChar="⚡"
-              iconColor="#f59e0b"
-            />
-            <StatCard
-              title="Time Saved"
-              value={`${timeSaved} hrs`}
-              change="+0%"
-              iconBg="rgba(20,184,166,0.08)"
-              iconChar="🕐"
-              iconColor="#14b8a6"
-            />
+            
           </View>
         )}
 
