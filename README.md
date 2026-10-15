@@ -2,6 +2,7 @@
 
 IntelliDoc is a full-stack, AI-powered document management and chat platform. It lets users upload documents, ask natural-language questions against them, manage knowledge bases, and get answers using a Corrective RAG (CRAG) pipeline — complete with web-search fallback and RAGAS-based quality evaluation.
 
+
 ---
 
 ## 🏗️ Monorepo Structure
