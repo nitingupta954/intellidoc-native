@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useWorkspaceStore } from '../../../src/store/workspaceStore';
-import { fetchDocuments, deleteDocument } from '../../../src/api/documents';
+import { fetchDocuments, deleteDocument, processDocument } from '../../../src/api/documents';
 import { Colors } from '../../../src/theme/colors';
 import { Document } from '../../../src/types';
 import {
@@ -22,7 +22,7 @@ const STATUS_COLORS: Record<string, string> = {
   UPLOADED: Colors.statusPending,
   PROCESSING: Colors.statusProcessing,
   INDEXED: Colors.statusIndexed,
-  ERROR: Colors.statusError,
+  ERROR: Colors.error,
   CANCELLED: Colors.statusPending,
 };
 
@@ -45,7 +45,6 @@ export default function DocumentsScreen() {
       const hasPending = docs.some(
         (d: Document) => d.status === 'PENDING' || d.status === 'UPLOADED' || d.status === 'PROCESSING',
       );
-      console.log('[DEBUG] refetchInterval checked. hasPending:', hasPending, 'docs count:', docs.length);
       return hasPending ? 3000 : false; // Poll 3s while any doc is processing
     },
     staleTime: 10_000,
@@ -65,6 +64,16 @@ export default function DocumentsScreen() {
     setRefreshing(false);
   };
 
+  const handleProcess = async (doc: Document) => {
+    try {
+      await processDocument(doc.id);
+      Alert.alert('Processing Initiated', `Asynchronous processing started for "${doc.filename}".`);
+      queryClient.invalidateQueries({ queryKey: ['documents', activeWorkspaceId] });
+    } catch (err: any) {
+      Alert.alert('Processing Error', err?.response?.data?.error || err.message || 'Failed to trigger processing.');
+    }
+  };
+
   const handleDelete = (doc: Document) => {
     Alert.alert(
       'Delete Document',
@@ -75,8 +84,12 @@ export default function DocumentsScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deleteDocument(doc.id);
-            queryClient.invalidateQueries({ queryKey: ['documents', activeWorkspaceId] });
+            try {
+              await deleteDocument(doc.id);
+              queryClient.invalidateQueries({ queryKey: ['documents', activeWorkspaceId] });
+            } catch (err: any) {
+              Alert.alert('Delete Failed', err?.response?.data?.error || err.message || 'Could not delete document.');
+            }
           },
         },
       ],
@@ -121,11 +134,39 @@ export default function DocumentsScreen() {
           )}
         </View>
 
-        {/* Status badge */}
-        <View style={[styles.statusBadge, { backgroundColor: `${STATUS_COLORS[item.status]}22` }]}>
-          <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}>
-            {statusLabel(item.status)}
-          </Text>
+        {/* Action column */}
+        <View style={styles.cardActions}>
+          <View style={[styles.statusBadge, { backgroundColor: `${STATUS_COLORS[item.status]}22` }]}>
+            <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}>
+              {statusLabel(item.status)}
+            </Text>
+          </View>
+
+          <View style={styles.btnRow}>
+            {(item.status === 'UPLOADED' || item.status === 'ERROR' || item.status === 'PENDING') && (
+              <TouchableOpacity
+                style={styles.quickProcessBtn}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleProcess(item);
+                }}
+              >
+                <Text style={styles.quickProcessText}>⚡ Process</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.trashBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleDelete(item);
+              }}
+            >
+              <Text style={styles.trashText}>🗑️</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </TouchableOpacity>
     ),
@@ -287,4 +328,32 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   emptyBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  cardActions: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  btnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  quickProcessBtn: {
+    backgroundColor: `${Colors.primary}20`,
+    borderWidth: 1,
+    borderColor: `${Colors.primary}60`,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  quickProcessText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  trashBtn: {
+    padding: 3,
+  },
+  trashText: {
+    fontSize: 14,
+  },
 });

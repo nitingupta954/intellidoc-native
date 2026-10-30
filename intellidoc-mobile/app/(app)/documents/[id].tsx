@@ -3,9 +3,9 @@ import Text from '../../../src/components/Text';
 import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { fetchDocument } from '../../../src/api/documents';
+import { fetchDocument, deleteDocument, processDocument } from '../../../src/api/documents';
 import { Colors } from '../../../src/theme/colors';
 import { statusLabel, formatFileSize, formatDate, formatMimeType } from '../../../src/lib/formatting';
 
@@ -14,12 +14,16 @@ const STATUS_COLORS: Record<string, string> = {
   UPLOADED: Colors.statusPending,
   PROCESSING: Colors.statusProcessing,
   INDEXED: Colors.statusIndexed,
-  ERROR: Colors.statusError,
+  ERROR: Colors.error,
   CANCELLED: Colors.statusPending,
 };
 
 export default function DocumentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const queryClient = useQueryClient();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const { data: doc, isLoading, refetch } = useQuery({
     queryKey: ['document', id],
     queryFn: () => fetchDocument(id!),
@@ -29,6 +33,54 @@ export default function DocumentDetailScreen() {
       return d?.status === 'PENDING' || d?.status === 'UPLOADED' || d?.status === 'PROCESSING' ? 3000 : false;
     },
   });
+
+  const handleProcess = async () => {
+    if (!doc) return;
+    try {
+      setIsProcessing(true);
+      await processDocument(doc.id);
+      Alert.alert(
+        'Processing Initiated',
+        'Asynchronous processing has started. The document will be parsed, chunked, and embedded in the background.'
+      );
+      queryClient.invalidateQueries({ queryKey: ['document', id] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    } catch (err: any) {
+      Alert.alert(
+        'Processing Error',
+        err?.response?.data?.error || err?.message || 'Failed to trigger asynchronous processing.'
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDelete = () => {
+    if (!doc) return;
+    Alert.alert(
+      'Delete Document',
+      `Are you sure you want to permanently delete "${doc.filename}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsDeleting(true);
+              await deleteDocument(doc.id);
+              queryClient.invalidateQueries({ queryKey: ['documents'] });
+              router.back();
+            } catch (err: any) {
+              Alert.alert('Delete Failed', err?.response?.data?.error || err?.message || 'Could not delete document.');
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   if (isLoading) {
     return (
@@ -157,6 +209,38 @@ export default function DocumentDetailScreen() {
             <Text style={styles.chatBtnText}>💬 Chat with this Document</Text>
           </TouchableOpacity>
         )}
+
+        {/* Asynchronous Processing Option */}
+        <TouchableOpacity
+          style={[styles.processBtn, isProcessing && { opacity: 0.7 }]}
+          disabled={isProcessing}
+          onPress={handleProcess}
+        >
+          {isProcessing ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.processBtnText}>
+              {doc.status === 'INDEXED'
+                ? '🔄 Reprocess Asynchronously'
+                : doc.status === 'PROCESSING'
+                ? '⚡ Re-queue Async Processing'
+                : '⚡ Start Asynchronous Processing'}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        {/* Delete Document Option */}
+        <TouchableOpacity
+          style={[styles.deleteBtn, isDeleting && { opacity: 0.7 }]}
+          disabled={isDeleting}
+          onPress={handleDelete}
+        >
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={Colors.error} />
+          ) : (
+            <Text style={styles.deleteBtnText}>🗑️ Delete Document</Text>
+          )}
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -238,6 +322,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 4,
+    marginBottom: 12,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
@@ -245,4 +330,24 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   chatBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  processBtn: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    borderRadius: 16,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  processBtnText: { color: Colors.primary, fontSize: 15, fontWeight: '700' },
+  deleteBtn: {
+    backgroundColor: `${Colors.error}15`,
+    borderWidth: 1,
+    borderColor: `${Colors.error}40`,
+    borderRadius: 16,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  deleteBtnText: { color: Colors.error, fontSize: 15, fontWeight: '700' },
 });

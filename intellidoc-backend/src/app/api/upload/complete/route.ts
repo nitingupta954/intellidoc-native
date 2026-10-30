@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import { createDocumentRecord } from "@/actions/documents";
 import { publishDocumentJob } from "@/lib/rabbitmq";
 
@@ -38,6 +39,8 @@ export async function POST(req: Request) {
 
     // Trigger RabbitMQ Job
     const minioPath = `minio://${process.env.S3_BUCKET_NAME || "intellidoc-documents"}/${document.storageKey}`;
+    let processingQueued = false;
+
     try {
       await publishDocumentJob(
         document.id,
@@ -46,14 +49,24 @@ export async function POST(req: Request) {
         document.workspaceId,
         document.knowledgeBaseId || null
       );
+      processingQueued = true;
     } catch (mqError) {
       console.error("Failed to push job to RabbitMQ:", mqError);
-      // We don't fail the upload if MQ is temporarily down, but log it.
       console.log("Falling back to HTTP async processing...");
       try {
-        // AI service typically runs on 8000 locally, and the endpoint requires /api/v1
-        const aiServiceBase = process.env.AI_SERVICE_URL?.replace(':8001', ':8000') || "http://localhost:8000";
-        fetch(`${aiServiceBase}/api/v1/documents/process`, {
+        // AI service base URL normalization (strip trailing slashes, /api/v1, or accidental prefix typos)
+        let rawAiUrl = process.env.AI_SERVICE_URL || process.env.API_URL || "https://intellidoc-ai-service.onrender.com";
+        if (rawAiUrl.includes("=")) {
+          rawAiUrl = rawAiUrl.split("=").pop()?.replace(/^["']|["']$/g, '') || rawAiUrl;
+        }
+        const aiServiceBase = rawAiUrl
+          .trim()
+          .replace(/\/+$/, '')
+          .replace(/\/api\/v1$/, '')
+          .replace(':8001', ':8000');
+
+        console.log(`Dispatching async document processing to: ${aiServiceBase}/api/v1/documents/process`);
+        const response = await fetch(`${aiServiceBase}/api/v1/documents/process`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -65,11 +78,31 @@ export async function POST(req: Request) {
             knowledge_base_id: document.knowledgeBaseId || null,
             uploaded_by: session.user.id,
             metadata: {}
-          })
-        }).catch(err => console.error("HTTP fallback failed:", err));
+          }),
+          signal: AbortSignal.timeout(10000)
+        });
+
+        if (response.ok) {
+          processingQueued = true;
+          console.log(`Successfully queued async processing for document: ${document.id}`);
+        } else {
+          const errText = await response.text();
+          console.error("HTTP async fallback failed with status:", response.status, errText);
+        }
       } catch (httpError) {
         console.error("HTTP fallback failed:", httpError);
       }
+    }
+
+    if (processingQueued) {
+      await db.document.update({
+        where: { id: document.id },
+        data: {
+          status: "PROCESSING",
+          currentStep: "Queued for processing",
+          progress: 15
+        }
+      }).catch(err => console.warn("Failed to update initial processing status:", err));
     }
 
     return NextResponse.json({ success: true, document });

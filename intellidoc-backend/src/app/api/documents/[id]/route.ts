@@ -94,25 +94,46 @@ export async function DELETE(
     const resolvedParams = await params;
     const documentId = resolvedParams.id;
 
-    // Check if the document belongs to the user
+    // Check if the document belongs to the user or workspace
     const document = await db.document.findUnique({
-      where: { id: documentId }
+      where: { id: documentId },
+      include: {
+        workspace: {
+          include: {
+            members: {
+              where: { userId: session.user.id }
+            }
+          }
+        }
+      }
     });
 
     if (!document) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
 
-    if (document.uploadedBy !== session.user.id) {
+    const isOwner = document.uploadedBy === session.user.id;
+    const isMember = (document.workspace?.members?.length ?? 0) > 0;
+    if (!isOwner && !isMember) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Delete the document (cascade delete citations etc should be handled by Prisma schema)
+    // Try deleting file from storage if key exists
+    if (document.storageKey) {
+      try {
+        const { deleteFile } = await import('@/lib/storage');
+        await deleteFile(document.storageKey);
+      } catch (storageErr) {
+        console.warn('Storage file cleanup failed (continuing with DB delete):', storageErr);
+      }
+    }
+
+    // Delete document in database (cascades to chunks etc.)
     await db.document.delete({
       where: { id: documentId }
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'Document deleted successfully' });
   } catch (error: any) {
     console.error('Delete Document Error:', error);
     return NextResponse.json({ error: 'Failed to delete document' }, { status: 500 });

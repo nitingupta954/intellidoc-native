@@ -48,10 +48,20 @@ export async function POST(req: Request) {
       await publishDocumentJob(document.id, minioPath, session.user.id, workspaceId);
     } catch (mqError) {
       console.error("Failed to push job to RabbitMQ:", mqError);
-      console.log("Falling back to HTTP async processing...");
+      let processingQueued = false;
       try {
-        const aiServiceUrl = process.env.AI_SERVICE_URL || "http://localhost:8000";
-        fetch(`${aiServiceUrl}/documents/process`, {
+        let rawAiUrl = process.env.AI_SERVICE_URL || process.env.API_URL || "https://intellidoc-ai-service.onrender.com";
+        if (rawAiUrl.includes("=")) {
+          rawAiUrl = rawAiUrl.split("=").pop()?.replace(/^["']|["']$/g, '') || rawAiUrl;
+        }
+        const aiServiceBase = rawAiUrl
+          .trim()
+          .replace(/\/+$/, '')
+          .replace(/\/api\/v1$/, '')
+          .replace(':8001', ':8000');
+
+        console.log(`Dispatching async document processing to: ${aiServiceBase}/api/v1/documents/process`);
+        const response = await fetch(`${aiServiceBase}/api/v1/documents/process`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -63,10 +73,30 @@ export async function POST(req: Request) {
             knowledge_base_id: null,
             uploaded_by: session.user.id,
             metadata: {}
-          })
-        }).catch(err => console.error("HTTP fallback failed:", err));
+          }),
+          signal: AbortSignal.timeout(10000)
+        });
+
+        if (response.ok) {
+          processingQueued = true;
+          console.log(`Successfully queued async processing for document: ${document.id}`);
+        } else {
+          const errText = await response.text();
+          console.error("HTTP async fallback failed with status:", response.status, errText);
+        }
       } catch (httpError) {
         console.error("HTTP fallback failed:", httpError);
+      }
+
+      if (processingQueued) {
+        await db.document.update({
+          where: { id: document.id },
+          data: {
+            status: "PROCESSING",
+            currentStep: "Queued for processing",
+            progress: 15
+          }
+        }).catch(err => console.warn("Failed to update initial processing status:", err));
       }
     }
 
