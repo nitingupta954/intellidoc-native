@@ -40,7 +40,6 @@ export default function middleware(req: NextRequest) {
     req.cookies.get("authjs.session-token")?.value ||
     req.cookies.get("__Secure-authjs.session-token")?.value;
 
-  const isLoggedIn = !!sessionToken;
   const { pathname } = req.nextUrl;
 
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register");
