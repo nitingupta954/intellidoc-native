@@ -23,11 +23,11 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiUrl": "http://localhost:3000",
+      "apiUrl": "https://doc-management-native.vercel.app",
       "router": {},
-      "eas": {
-        "projectId": "a1c11814-13f9-44f8-945d-3b2ccc377b2b"
-      }
-    }
+      "eas": {}
+
+    },
+    "owner": "nitingupta955"
   }
 }

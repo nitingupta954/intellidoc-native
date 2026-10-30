@@ -48,9 +48,9 @@ module.exports = ({ config }) => ({
     typedRoutes: true,
   },
   extra: {
-    apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
+    apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://doc-management-native.vercel.app',
     eas: {
-      projectId: "a1c11814-13f9-44f8-945d-3b2ccc377b2b"
-    }
+      projectId: '04ca3ef4-3145-45f1-8007-8d67823f0c67',
+    },
   },
 });
