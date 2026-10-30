@@ -1,14 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+// Production and known allowed origins
+const STATIC_ALLOWED_ORIGINS = new Set([
+  "http://localhost:8081",
+  "http://localhost:8082",
+  "http://localhost:8083",
+  "https://doc-management-native.vercel.app",
+  "https://intellidoc-native.onrender.com",
+]);
+
 export default function middleware(req: NextRequest) {
   const origin = req.headers.get("origin") || "";
-  // Check if it's localhost (any port) or 172.x or 192.x
-  const isAllowedOrigin = origin.match(/^http:\/\/localhost:\d+$/) || 
-                          origin.match(/^http:\/\/172\.\d+\.\d+\.\d+:\d+$/) ||
-                          origin.match(/^http:\/\/192\.168\.\d+\.\d+:\d+$/) ||
-                          origin === "http://localhost:8081" ||
-                          origin === "http://localhost:8082" ||
-                          origin === "http://localhost:8083";
+  // Check if it's localhost (any port), LAN IP, or a known production origin
+  const isAllowedOrigin =
+    STATIC_ALLOWED_ORIGINS.has(origin) ||
+    origin.match(/^http:\/\/localhost:\d+$/) ||
+    origin.match(/^http:\/\/172\.\d+\.\d+\.\d+:\d+$/) ||
+    origin.match(/^http:\/\/10\.\d+\.\d+\.\d+:\d+$/) ||
+    origin.match(/^http:\/\/192\.168\.\d+\.\d+:\d+$/);
 
   const allowedOrigin = isAllowedOrigin ? origin : "http://localhost:8081";
 
@@ -50,6 +59,14 @@ export default function middleware(req: NextRequest) {
     // Override the native Cookie header with our manual bypass header from React Native
     requestHeaders.set("cookie", mobileCookie);
   }
+
+  // IMPORTANT: derive isLoggedIn AFTER applying the mobile cookie override so that
+  // React Native clients with a valid session token are treated as authenticated.
+  const effectiveCookieHeader = mobileCookie ?? req.headers.get("cookie") ?? "";
+  const hasMobileSession =
+    effectiveCookieHeader.includes("authjs.session-token=") ||
+    effectiveCookieHeader.includes("__Secure-authjs.session-token=");
+  const isLoggedIn = !!sessionToken || hasMobileSession;
 
   let response = NextResponse.next({
     request: {

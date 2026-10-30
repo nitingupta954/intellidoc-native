@@ -1,6 +1,6 @@
 import React from 'react';
 import Text from '../../src/components/Text';
-import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Modal } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Modal, Alert } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -97,7 +97,7 @@ function WorkspaceSelector() {
           <Text style={styles.workspaceIcon}>🏢</Text>
         </View>
         <Text style={styles.workspaceName} numberOfLines={1}>
-          {active?.name ?? 'Workspace'}
+          {active?.name ?? (workspaces.length === 0 ? '+ Add Workspace' : 'Select Workspace')}
         </Text>
         <Text style={styles.workspaceChevron}>⌄</Text>
       </TouchableOpacity>
@@ -110,27 +110,55 @@ function WorkspaceSelector() {
         >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Workspace</Text>
-            {workspaces.map((ws) => (
-              <TouchableOpacity
-                key={ws.id}
-                style={[
-                  styles.workspaceItem,
-                  ws.id === activeWorkspaceId && styles.workspaceItemActive
-                ]}
-                onPress={() => {
-                  setActiveWorkspace(ws.id);
-                  setModalVisible(false);
-                }}
-              >
-                <Text style={[
-                  styles.workspaceItemText,
-                  ws.id === activeWorkspaceId && styles.workspaceItemTextActive
-                ]}>{ws.name}</Text>
-                {ws.id === activeWorkspaceId && (
-                  <Text style={styles.workspaceItemCheck}>✓</Text>
-                )}
-              </TouchableOpacity>
-            ))}
+            {workspaces.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+                <Text style={{ color: Colors.textMuted, fontSize: 14, marginBottom: 16 }}>
+                  No workspaces yet
+                </Text>
+                <TouchableOpacity
+                  style={styles.modalCreateBtn}
+                  onPress={() => {
+                    setModalVisible(false);
+                    router.push('/(app)/profile/workspaces' as any);
+                  }}
+                >
+                  <Text style={styles.modalCreateBtnText}>+ Create Workspace</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                {workspaces.map((ws) => (
+                  <TouchableOpacity
+                    key={ws.id}
+                    style={[
+                      styles.workspaceItem,
+                      ws.id === activeWorkspaceId && styles.workspaceItemActive
+                    ]}
+                    onPress={() => {
+                      setActiveWorkspace(ws.id);
+                      setModalVisible(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.workspaceItemText,
+                      ws.id === activeWorkspaceId && styles.workspaceItemTextActive
+                    ]}>{ws.name}</Text>
+                    {ws.id === activeWorkspaceId && (
+                      <Text style={styles.workspaceItemCheck}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  style={styles.manageWorkspacesBtn}
+                  onPress={() => {
+                    setModalVisible(false);
+                    router.push('/(app)/profile/workspaces' as any);
+                  }}
+                >
+                  <Text style={styles.manageWorkspacesText}>Manage Workspaces →</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -141,7 +169,7 @@ function WorkspaceSelector() {
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const { user } = useSessionStore();
-  const { activeWorkspaceId } = useWorkspaceStore();
+  const { activeWorkspaceId, workspaces } = useWorkspaceStore();
 
   const {
     data: docs = [],
@@ -224,12 +252,45 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.uploadBtn}
-          onPress={() => router.push('/(app)/documents' as any)}
+          onPress={() => {
+            if (!activeWorkspaceId) {
+              Alert.alert(
+                'No Workspace Selected',
+                'Please select or create a workspace before uploading documents.',
+                [
+                  { text: 'Manage Workspaces', onPress: () => router.push('/(app)/profile/workspaces' as any) },
+                  { text: 'Cancel', style: 'cancel' }
+                ]
+              );
+              return;
+            }
+            router.push('/(app)/documents' as any);
+          }}
           activeOpacity={0.85}
         >
           <Text style={styles.uploadBtnIcon}>📄</Text>
           <Text style={styles.uploadBtnText}>Upload Document</Text>
         </TouchableOpacity>
+
+        {/* ── No Active Workspace Banner ── */}
+        {!activeWorkspaceId && (
+          <View style={styles.noWsCard}>
+            <Text style={styles.noWsTitle}>No Active Workspace</Text>
+            <Text style={styles.noWsSubtitle}>
+              {workspaces.length === 0
+                ? "You don't have any workspaces yet. Create one to organize your documents and conversations."
+                : 'Select an active workspace from the top menu or manage your workspaces.'}
+            </Text>
+            <TouchableOpacity
+              style={styles.noWsButton}
+              onPress={() => router.push('/(app)/profile/workspaces' as any)}
+            >
+              <Text style={styles.noWsButtonText}>
+                {workspaces.length === 0 ? '+ Create First Workspace' : 'Manage Workspaces'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* ── Stat Cards ── */}
         {isLoading ? (
@@ -581,5 +642,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.primaryLight,
     fontWeight: '700',
+  },
+  modalCreateBtn: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  modalCreateBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  manageWorkspacesBtn: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  manageWorkspacesText: {
+    color: Colors.primaryLight,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  noWsCard: {
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: `${Colors.primary}33`,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  noWsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 6,
+  },
+  noWsSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  noWsButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  noWsButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

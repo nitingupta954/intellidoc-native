@@ -7,7 +7,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import axios from 'axios';
-import { Platform } from 'react-native';
 
 import { BASE_URL } from './client';
 import {

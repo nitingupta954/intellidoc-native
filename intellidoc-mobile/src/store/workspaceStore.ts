@@ -77,37 +77,30 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const { workspaces, activeWorkspaceId } = get();
     const newWorkspaces = workspaces.filter(w => w.id !== id);
     set({ workspaces: newWorkspaces });
-    
+
     if (activeWorkspaceId === id) {
       if (newWorkspaces.length > 0) {
         set({ activeWorkspaceId: newWorkspaces[0].id });
         await AsyncStorage.setItem(ACTIVE_WS_KEY, newWorkspaces[0].id);
       } else {
+        // No workspaces left — clear selection, let the UI show an empty state
         set({ activeWorkspaceId: null });
         await AsyncStorage.removeItem(ACTIVE_WS_KEY);
-        // If the user deleted their very last workspace, recreate the default one
-        // so the app doesn't crash from a missing activeWorkspaceId
-        get().bootstrapWorkspace();
       }
     }
   },
 
   /**
-   * Workspace bootstrap gate (P4 from the implementation plan):
-   * - Load workspaces
-   * - If none → auto-create "My Workspace" silently
-   * Called after login, before rendering the main app tabs.
+   * Workspace bootstrap gate:
+   * - Loads the user's workspaces from the server.
+   * - Restores the previously active workspace from AsyncStorage.
+   * - Does NOT auto-create a workspace — the UI handles the empty state.
    */
   bootstrapWorkspace: async () => {
     if (get().isBootstrapping) return;
     set({ isBootstrapping: true });
     try {
-      const { loadWorkspaces, createAndSetWorkspace } = get();
-      await loadWorkspaces();
-      const { workspaces } = get();
-      if (workspaces.length === 0) {
-        await createAndSetWorkspace('My Workspace');
-      }
+      await get().loadWorkspaces();
     } finally {
       set({ isBootstrapping: false });
     }
