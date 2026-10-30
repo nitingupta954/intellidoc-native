@@ -5,7 +5,7 @@ import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Aler
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { fetchDocument, deleteDocument, processDocument } from '../../../src/api/documents';
+import { fetchDocument, deleteDocument, processDocument, cancelDocumentProcessing } from '../../../src/api/documents';
 import { Colors } from '../../../src/theme/colors';
 import { statusLabel, formatFileSize, formatDate, formatMimeType } from '../../../src/lib/formatting';
 
@@ -15,7 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
   PROCESSING: Colors.statusProcessing,
   INDEXED: Colors.statusIndexed,
   ERROR: Colors.error,
-  CANCELLED: Colors.statusPending,
+  CANCELLED: Colors.warning,
 };
 
 export default function DocumentDetailScreen() {
@@ -23,6 +23,7 @@ export default function DocumentDetailScreen() {
   const queryClient = useQueryClient();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const { data: doc, isLoading, refetch } = useQuery({
     queryKey: ['document', id],
@@ -30,9 +31,36 @@ export default function DocumentDetailScreen() {
     enabled: !!id,
     refetchInterval: (query) => {
       const d = query.state.data as any;
-      return d?.status === 'PENDING' || d?.status === 'UPLOADED' || d?.status === 'PROCESSING' ? 3000 : false;
+      return d?.status === 'PROCESSING' ? 3000 : false;
     },
   });
+
+  const handleCancel = () => {
+    if (!doc) return;
+    Alert.alert(
+      'Cancel Processing',
+      `Are you sure you want to cancel processing for "${doc.filename}"?`,
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsCancelling(true);
+              await cancelDocumentProcessing(doc.id);
+              queryClient.invalidateQueries({ queryKey: ['document', id] });
+              queryClient.invalidateQueries({ queryKey: ['documents'] });
+            } catch (err: any) {
+              Alert.alert('Cancel Failed', err?.response?.data?.error || err.message || 'Could not cancel processing.');
+            } finally {
+              setIsCancelling(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleProcess = async () => {
     if (!doc) return;
@@ -127,8 +155,8 @@ export default function DocumentDetailScreen() {
             </View>
           </View>
 
-          {/* Processing progress */}
-          {(doc.status === 'PROCESSING' || doc.status === 'UPLOADED') && (
+          {/* Processing progress (ONLY while actively PROCESSING) */}
+          {doc.status === 'PROCESSING' && (
             <View style={styles.progressSection}>
               <Text style={styles.progressStep}>⚙️ {doc.currentStep ?? 'Processing…'}</Text>
               <View style={styles.progressBar}>
@@ -140,6 +168,15 @@ export default function DocumentDetailScreen() {
                 />
               </View>
               <Text style={styles.progressPct}>{doc.progress ?? 0}%</Text>
+            </View>
+          )}
+
+          {/* Cancelled Info */}
+          {doc.status === 'CANCELLED' && (
+            <View style={styles.cancelledBox}>
+              <Text style={styles.cancelledText}>
+                ⏹️ Processing was cancelled. You can restart asynchronous processing whenever you are ready.
+              </Text>
             </View>
           )}
 
@@ -210,24 +247,38 @@ export default function DocumentDetailScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Asynchronous Processing Option */}
-        <TouchableOpacity
-          style={[styles.processBtn, isProcessing && { opacity: 0.7 }]}
-          disabled={isProcessing}
-          onPress={handleProcess}
-        >
-          {isProcessing ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.processBtnText}>
-              {doc.status === 'INDEXED'
-                ? '🔄 Reprocess Asynchronously'
-                : doc.status === 'PROCESSING'
-                ? '⚡ Re-queue Async Processing'
-                : '⚡ Start Asynchronous Processing'}
-            </Text>
-          )}
-        </TouchableOpacity>
+        {/* Action Button: Cancel when processing, or Process/Restart when idle */}
+        {doc.status === 'PROCESSING' ? (
+          <TouchableOpacity
+            style={[styles.cancelBtn, isCancelling && { opacity: 0.7 }]}
+            disabled={isCancelling}
+            onPress={handleCancel}
+          >
+            {isCancelling ? (
+              <ActivityIndicator size="small" color={Colors.warning} />
+            ) : (
+              <Text style={styles.cancelBtnText}>⏹️ Cancel Processing</Text>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.processBtn, isProcessing && { opacity: 0.7 }]}
+            disabled={isProcessing}
+            onPress={handleProcess}
+          >
+            {isProcessing ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.processBtnText}>
+                {doc.status === 'INDEXED'
+                  ? '🔄 Reprocess Asynchronously'
+                  : doc.status === 'CANCELLED'
+                  ? '⚡ Restart Processing'
+                  : '⚡ Start Asynchronous Processing'}
+              </Text>
+            )}
+          </TouchableOpacity>
+        )}
 
         {/* Delete Document Option */}
         <TouchableOpacity
@@ -350,4 +401,23 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   deleteBtnText: { color: Colors.error, fontSize: 15, fontWeight: '700' },
+  cancelBtn: {
+    backgroundColor: `${Colors.warning}15`,
+    borderWidth: 1.5,
+    borderColor: Colors.warning,
+    borderRadius: 16,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  cancelBtnText: { color: Colors.warning, fontSize: 15, fontWeight: '700' },
+  cancelledBox: {
+    marginTop: 12,
+    backgroundColor: `${Colors.warning}15`,
+    borderWidth: 1,
+    borderColor: `${Colors.warning}35`,
+    borderRadius: 12,
+    padding: 12,
+  },
+  cancelledText: { color: Colors.warning, fontSize: 13, lineHeight: 18 },
 });

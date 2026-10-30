@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useWorkspaceStore } from '../../../src/store/workspaceStore';
-import { fetchDocuments, deleteDocument, processDocument } from '../../../src/api/documents';
+import { fetchDocuments, deleteDocument, processDocument, cancelDocumentProcessing } from '../../../src/api/documents';
 import { Colors } from '../../../src/theme/colors';
 import { Document } from '../../../src/types';
 import {
@@ -23,7 +23,7 @@ const STATUS_COLORS: Record<string, string> = {
   PROCESSING: Colors.statusProcessing,
   INDEXED: Colors.statusIndexed,
   ERROR: Colors.error,
-  CANCELLED: Colors.statusPending,
+  CANCELLED: Colors.warning,
 };
 
 export default function DocumentsScreen() {
@@ -42,10 +42,10 @@ export default function DocumentsScreen() {
     enabled: !!activeWorkspaceId,
     refetchInterval: (query) => {
       const docs = query.state.data ?? [];
-      const hasPending = docs.some(
-        (d: Document) => d.status === 'PENDING' || d.status === 'UPLOADED' || d.status === 'PROCESSING',
+      const isActivelyProcessing = docs.some(
+        (d: Document) => d.status === 'PROCESSING',
       );
-      return hasPending ? 3000 : false; // Poll 3s while any doc is processing
+      return isActivelyProcessing ? 3000 : false;
     },
     staleTime: 10_000,
   });
@@ -72,6 +72,28 @@ export default function DocumentsScreen() {
     } catch (err: any) {
       Alert.alert('Processing Error', err?.response?.data?.error || err.message || 'Failed to trigger processing.');
     }
+  };
+
+  const handleCancel = (doc: Document) => {
+    Alert.alert(
+      'Cancel Processing',
+      `Are you sure you want to cancel processing for "${doc.filename}"?`,
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await cancelDocumentProcessing(doc.id);
+              queryClient.invalidateQueries({ queryKey: ['documents', activeWorkspaceId] });
+            } catch (err: any) {
+              Alert.alert('Cancel Failed', err?.response?.data?.error || err.message || 'Could not cancel processing.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleDelete = (doc: Document) => {
@@ -113,16 +135,20 @@ export default function DocumentsScreen() {
           <Text style={styles.docName} numberOfLines={1}>
             {item.filename}
           </Text>
-          {(item.status === 'PROCESSING' || item.status === 'UPLOADED') ? (
+          {item.status === 'PROCESSING' ? (
             <Text style={styles.docStep} numberOfLines={1}>
               ⚙️ {item.currentStep ?? 'Processing...'}
+            </Text>
+          ) : item.status === 'CANCELLED' ? (
+            <Text style={[styles.docMeta, { color: Colors.warning }]}>
+              ⏹️ Cancelled · {formatFileSize(item.fileSize)}
             </Text>
           ) : (
             <Text style={styles.docMeta}>
               {formatFileSize(item.fileSize)} · {formatDate(item.createdAt)}
             </Text>
           )}
-          {(item.status === 'PROCESSING' || item.status === 'UPLOADED') && (
+          {item.status === 'PROCESSING' && (
             <View style={styles.progressBar}>
               <View
                 style={[
@@ -143,7 +169,18 @@ export default function DocumentsScreen() {
           </View>
 
           <View style={styles.btnRow}>
-            {(item.status === 'UPLOADED' || item.status === 'ERROR' || item.status === 'PENDING') && (
+            {item.status === 'PROCESSING' ? (
+              <TouchableOpacity
+                style={styles.cancelChip}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleCancel(item);
+                }}
+              >
+                <Text style={styles.cancelChipText}>✕ Cancel</Text>
+              </TouchableOpacity>
+            ) : (item.status === 'UPLOADED' || item.status === 'ERROR' || item.status === 'PENDING' || item.status === 'CANCELLED') && (
               <TouchableOpacity
                 style={styles.quickProcessBtn}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
@@ -152,7 +189,9 @@ export default function DocumentsScreen() {
                   handleProcess(item);
                 }}
               >
-                <Text style={styles.quickProcessText}>⚡ Process</Text>
+                <Text style={styles.quickProcessText}>
+                  {item.status === 'CANCELLED' ? '⚡ Retry' : '⚡ Process'}
+                </Text>
               </TouchableOpacity>
             )}
 
@@ -355,5 +394,18 @@ const styles = StyleSheet.create({
   },
   trashText: {
     fontSize: 14,
+  },
+  cancelChip: {
+    backgroundColor: `${Colors.warning}20`,
+    borderWidth: 1,
+    borderColor: `${Colors.warning}60`,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  cancelChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.warning,
   },
 });

@@ -29,6 +29,11 @@ export async function processDocument(id: string): Promise<Document> {
   return res.data.document;
 }
 
+export async function cancelDocumentProcessing(id: string): Promise<Document> {
+  const res = await api.post(`/api/documents/${id}/cancel`);
+  return res.data.document;
+}
+
 export async function getDocumentDownloadUrl(id: string): Promise<string> {
   // Returns a download URL — we construct it and use FileSystem.downloadAsync
   return `${api.defaults.baseURL}/api/documents/${id}/download`;
