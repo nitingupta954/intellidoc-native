@@ -32,8 +32,19 @@ export default function RegisterPage() {
         throw new Error(data.error || "Registration failed");
       }
 
-      // Redirect to OTP verification page
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      // Automatically sign in and redirect to dashboard
+      const signInRes = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (signInRes?.error) {
+        router.push("/login?registered=true");
+      } else {
+        router.push("/dashboard");
+        router.refresh();
+      }
     } catch (err) {
       if (err instanceof Error) setError(err.message);
     } finally {

@@ -1,19 +1,25 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
-import { getRedisClient } from "@/lib/redis/client";
-import { emailService } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
     const { name, email, password } = await req.json();
 
-    if (!name || !email || !password) {
+    const cleanName = (name ?? "").trim();
+    const cleanEmail = (email ?? "").trim().toLowerCase();
+
+    if (!cleanName || !cleanEmail || !password) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const existingUser = await db.user.findUnique({
-      where: { email },
+    const existingUser = await db.user.findFirst({
+      where: {
+        email: {
+          equals: cleanEmail,
+          mode: "insensitive"
+        }
+      },
     });
 
     if (existingUser) {
@@ -24,9 +30,10 @@ export async function POST(req: Request) {
 
     const user = await db.user.create({
       data: {
-        name,
-        email,
+        name: cleanName,
+        email: cleanEmail,
         password: hashedPassword,
+        emailVerified: new Date(),
         creditWallet: {
           create: {
             balance: 200,
@@ -42,14 +49,6 @@ export async function POST(req: Request) {
         }
       },
     });
-
-    // Generate and store OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const redis = await getRedisClient();
-    await redis.set(`auth:otp:${email}`, otp, "EX", 600); // 10 minutes
-
-    // Send OTP email
-    await emailService.sendVerificationOTP(email, otp);
 
     return NextResponse.json({ success: true, email: user.email }, { status: 201 });
   } catch (error) {

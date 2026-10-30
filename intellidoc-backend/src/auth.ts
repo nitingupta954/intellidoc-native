@@ -36,63 +36,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         isVerification: { label: "isVerification", type: "text" }
       },
       async authorize(credentials) {
-        const email = credentials?.email as string;
-        if (!email) return null;
+        const rawEmail = (credentials?.email as string) ?? "";
+        const password = (credentials?.password as string) ?? "";
+        const email = rawEmail.trim().toLowerCase();
 
-        const user = await db.user.findUnique({
-          where: { email }
+        if (!email || !password) return null;
+
+        const user = await db.user.findFirst({
+          where: {
+            email: {
+              equals: email,
+              mode: "insensitive"
+            }
+          }
         });
 
-        if (!user) return null;
+        if (!user || !user.password) return null;
 
-        // OTP Verification Flow
-        if (credentials?.isVerification === "true") {
-          const otp = credentials.otp as string;
-          if (!otp) return null;
-
-          const { getRedisClient } = await import("@/lib/redis/client");
-          const redis = await getRedisClient();
-          const storedOtp = await redis.get(`auth:otp:${email}`);
-
-          if (storedOtp !== otp) {
-            throw new Error("Invalid or expired OTP.");
-          }
-
-          // Mark email as verified
-          await db.user.update({
-            where: { email },
-            data: { emailVerified: new Date() }
-          });
-
-          await redis.del(`auth:otp:${email}`);
-
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            image: user.image,
-          };
-        }
-
-        // Standard Login Flow
-        if (!credentials?.password || !user.password) {
-          // Account uses social login — return null for generic CredentialsSignin
-          return null;
-        }
-
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
-
-        if (!isValid) {
-          // Return null — throwing here causes NextAuth CallbackRouteError (500)
-          return null;
-        }
-
-        if (!user.emailVerified) {
-          throw new Error("Please verify your email address before logging in.");
-        }
+        const isValid = await bcrypt.compare(password, user.password);
+        if (!isValid) return null;
 
         return {
           id: user.id,

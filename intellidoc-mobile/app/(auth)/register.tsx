@@ -17,7 +17,7 @@ export default function RegisterScreen() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { register, isLoading, clearError } = useSessionStore();
+  const { register, login, isLoading, clearError } = useSessionStore();
 
   const handleRegister = async () => {
     clearError();
@@ -31,8 +31,10 @@ export default function RegisterScreen() {
       return;
     }
     try {
-      await register(name.trim(), email.trim().toLowerCase(), password);
-      router.push(`/(auth)/verify-otp?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+      const cleanEmail = email.trim().toLowerCase();
+      await register(name.trim(), cleanEmail, password);
+      await login(cleanEmail, password);
+      router.replace('/(app)/home');
     } catch (e: any) {
       setErrorMsg(e?.message ?? 'Registration failed. Please try again.');
     }

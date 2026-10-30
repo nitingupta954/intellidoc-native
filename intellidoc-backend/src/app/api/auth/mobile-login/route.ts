@@ -26,7 +26,9 @@ const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password } = body as { email?: string; password?: string };
+    const rawEmail = (body.email ?? "") as string;
+    const password = (body.password ?? "") as string;
+    const email = rawEmail.trim().toLowerCase();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -35,18 +37,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await db.user.findUnique({ where: { email } });
+    // Match user by email (case-insensitive)
+    const user = await db.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: "insensitive",
+        },
+      },
+    });
 
-    if (!user) {
+    if (!user || !user.password) {
       return NextResponse.json(
         { error: "Invalid email or password." },
-        { status: 401 }
-      );
-    }
-
-    if (!user.password) {
-      return NextResponse.json(
-        { error: "This account uses social login. Please sign in with Google." },
         { status: 401 }
       );
     }
@@ -56,13 +59,6 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Invalid email or password." },
         { status: 401 }
-      );
-    }
-
-    if (!user.emailVerified) {
-      return NextResponse.json(
-        { error: "Please verify your email address before logging in." },
-        { status: 403 }
       );
     }
 
