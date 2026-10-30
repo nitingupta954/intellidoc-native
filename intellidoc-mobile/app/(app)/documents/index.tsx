@@ -120,47 +120,51 @@ export default function DocumentsScreen() {
 
   const renderDoc = useCallback(
     ({ item }: { item: Document }) => (
-      <TouchableOpacity
-        style={styles.docCard}
-        onPress={() => router.push(`/(app)/documents/${item.id}` as any)}
-        onLongPress={() => handleDelete(item)}
-      >
-        {/* File type badge */}
-        <View style={styles.fileBadge}>
-          <Text style={styles.fileBadgeText}>{formatMimeType(item.mimeType)}</Text>
-        </View>
+      <View style={styles.docCard}>
+        {/* Left Clickable Area (Navigates to detail) */}
+        <TouchableOpacity
+          style={styles.docCardMain}
+          activeOpacity={0.7}
+          onPress={() => router.push(`/(app)/documents/${item.id}` as any)}
+          onLongPress={() => handleDelete(item)}
+        >
+          {/* File type badge */}
+          <View style={styles.fileBadge}>
+            <Text style={styles.fileBadgeText}>{formatMimeType(item.mimeType)}</Text>
+          </View>
 
-        {/* Info */}
-        <View style={styles.docInfo}>
-          <Text style={styles.docName} numberOfLines={1}>
-            {item.filename}
-          </Text>
-          {item.status === 'PROCESSING' ? (
-            <Text style={styles.docStep} numberOfLines={1}>
-              ⚙️ {item.currentStep ?? 'Processing...'}
+          {/* Info */}
+          <View style={styles.docInfo}>
+            <Text style={styles.docName} numberOfLines={1}>
+              {item.filename}
             </Text>
-          ) : item.status === 'CANCELLED' ? (
-            <Text style={[styles.docMeta, { color: Colors.warning }]}>
-              ⏹️ Cancelled · {formatFileSize(item.fileSize)}
-            </Text>
-          ) : (
-            <Text style={styles.docMeta}>
-              {formatFileSize(item.fileSize)} · {formatDate(item.createdAt)}
-            </Text>
-          )}
-          {item.status === 'PROCESSING' && (
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${item.progress ?? 10}%` },
-                ]}
-              />
-            </View>
-          )}
-        </View>
+            {item.status === 'PROCESSING' ? (
+              <Text style={styles.docStep} numberOfLines={1}>
+                ⚙️ {item.currentStep ?? 'Processing...'}
+              </Text>
+            ) : item.status === 'CANCELLED' ? (
+              <Text style={[styles.docMeta, { color: Colors.warning }]}>
+                ⏹️ Cancelled · {formatFileSize(item.fileSize)}
+              </Text>
+            ) : (
+              <Text style={styles.docMeta}>
+                {formatFileSize(item.fileSize)} · {formatDate(item.createdAt)}
+              </Text>
+            )}
+            {item.status === 'PROCESSING' && (
+              <View style={styles.progressBar}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${item.progress ?? 10}%` },
+                  ]}
+                />
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
 
-        {/* Action column */}
+        {/* Action column (Independent touchables) */}
         <View style={styles.cardActions}>
           <View style={[styles.statusBadge, { backgroundColor: `${STATUS_COLORS[item.status]}22` }]}>
             <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}>
@@ -172,22 +176,16 @@ export default function DocumentsScreen() {
             {item.status === 'PROCESSING' ? (
               <TouchableOpacity
                 style={styles.cancelChip}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleCancel(item);
-                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                onPress={() => handleCancel(item)}
               >
                 <Text style={styles.cancelChipText}>✕ Cancel</Text>
               </TouchableOpacity>
             ) : (item.status === 'UPLOADED' || item.status === 'ERROR' || item.status === 'PENDING' || item.status === 'CANCELLED') && (
               <TouchableOpacity
                 style={styles.quickProcessBtn}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleProcess(item);
-                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                onPress={() => handleProcess(item)}
               >
                 <Text style={styles.quickProcessText}>
                   {item.status === 'CANCELLED' ? '⚡ Retry' : '⚡ Process'}
@@ -197,17 +195,14 @@ export default function DocumentsScreen() {
 
             <TouchableOpacity
               style={styles.trashBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              onPress={(e) => {
-                e.stopPropagation();
-                handleDelete(item);
-              }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              onPress={() => handleDelete(item)}
             >
               <Text style={styles.trashText}>🗑️</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </TouchableOpacity>
+      </View>
     ),
     [activeWorkspaceId],
   );
@@ -309,6 +304,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     borderColor: Colors.border,
+    gap: 12,
+  },
+  docCardMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
   fileBadge: {

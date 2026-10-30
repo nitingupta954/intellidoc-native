@@ -113,18 +113,22 @@ export async function DELETE(
     }
 
     const isOwner = document.uploadedBy === session.user.id;
+    const isWsOwner = document.workspace?.ownerId === session.user.id;
     const isMember = (document.workspace?.members?.length ?? 0) > 0;
-    if (!isOwner && !isMember) {
+    if (!isOwner && !isMember && !isWsOwner) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Try deleting file from storage if key exists
+    // Try deleting file from storage if key exists (non-blocking with timeout so DB delete is guaranteed)
     if (document.storageKey) {
       try {
         const { deleteFile } = await import('@/lib/storage');
-        await deleteFile(document.storageKey);
+        await Promise.race([
+          deleteFile(document.storageKey),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Storage delete timeout')), 2500))
+        ]);
       } catch (storageErr) {
-        console.warn('Storage file cleanup failed (continuing with DB delete):', storageErr);
+        console.warn('Storage file cleanup skipped (continuing with DB delete):', storageErr);
       }
     }
 
