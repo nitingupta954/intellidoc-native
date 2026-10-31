@@ -78,7 +78,7 @@ export async function POST(
     // 2. HTTP Fallback to AI Service if RabbitMQ didn't queue it
     if (!dispatchSuccess) {
       try {
-        let rawAiUrl = process.env.AI_SERVICE_URL || process.env.API_URL || "https://intellidoc-ai-service.onrender.com";
+        let rawAiUrl = process.env.AI_SERVICE_URL || process.env.API_URL || "https://intellidoc-native.onrender.com";
         if (rawAiUrl.includes("=")) {
           rawAiUrl = rawAiUrl.split("=").pop()?.replace(/^["']|["']$/g, '') || rawAiUrl;
         }

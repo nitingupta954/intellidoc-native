@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       console.log("Falling back to HTTP async processing...");
       try {
         // AI service base URL normalization (strip trailing slashes, /api/v1, or accidental prefix typos)
-        let rawAiUrl = process.env.AI_SERVICE_URL || process.env.API_URL || "https://intellidoc-ai-service.onrender.com";
+        let rawAiUrl = process.env.AI_SERVICE_URL || process.env.API_URL || "https://intellidoc-native.onrender.com";
         if (rawAiUrl.includes("=")) {
           rawAiUrl = rawAiUrl.split("=").pop()?.replace(/^["']|["']$/g, '') || rawAiUrl;
         }

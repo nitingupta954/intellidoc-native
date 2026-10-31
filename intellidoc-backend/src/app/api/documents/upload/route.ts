@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       console.error("Failed to push job to RabbitMQ:", mqError);
       let processingQueued = false;
       try {
-        let rawAiUrl = process.env.AI_SERVICE_URL || process.env.API_URL || "https://intellidoc-ai-service.onrender.com";
+        let rawAiUrl = process.env.AI_SERVICE_URL || process.env.API_URL || "https://intellidoc-native.onrender.com";
         if (rawAiUrl.includes("=")) {
           rawAiUrl = rawAiUrl.split("=").pop()?.replace(/^["']|["']$/g, '') || rawAiUrl;
         }

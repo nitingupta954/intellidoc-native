@@ -17,7 +17,7 @@ export async function scoreHallucination(
       return 0.0; // No context → assume grounded (nothing to contradict)
     }
 
-    const aiServiceBase = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+    const aiServiceBase = process.env.AI_SERVICE_URL || 'https://intellidoc-native.onrender.com';
 
     const resp = await fetch(`${aiServiceBase}/api/v1/evaluate`, {
       method: 'POST',

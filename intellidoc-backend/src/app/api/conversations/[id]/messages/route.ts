@@ -54,7 +54,7 @@ async function runRAGASEvaluation(
       return;
     }
 
-    const evalUrl = `${API_BASE_URL}/evaluate`;
+    const evalUrl = `${API_BASE_URL}/api/v1/evaluate`;
 
     const resp = await fetch(evalUrl, {
       method: 'POST',
@@ -210,10 +210,11 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
     }
 
     // Proxy stream to FastAPI
-    const response = await fetch(`${API_BASE_URL}/chat`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-Internal-Secret': process.env.INTERNAL_SERVICE_SECRET || '',
         'X-OpenAI-API-Key': userOpenAIKey,
         'X-Gemini-API-Key': userGeminiKey,
         'X-Uses-System-Key': isBYOK ? 'false' : 'true',

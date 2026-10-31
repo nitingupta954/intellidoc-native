@@ -1,7 +1,7 @@
 import { env } from '../env';
 
-// Base API URL config
-export const API_BASE_URL = env.API_URL;
+// Base API URL config — no trailing slash, no /api/v1 suffix (appended per-call)
+export const API_BASE_URL = env.API_URL.replace(/\/+$/, '');
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const uploadDocument = async (file: File, metadata: Record<string, any> = {}) => {

@@ -31,10 +31,11 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
     const userGeminiKey = userRecord?.geminiKey || process.env.GEMINI_API_KEY || "";
 
     // Proxy stream to FastAPI
-    const response = await fetch(`${API_BASE_URL}/chat/resolve`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/chat/resolve`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-Internal-Secret': process.env.INTERNAL_SERVICE_SECRET || '',
         'X-OpenAI-API-Key': userOpenAIKey,
         'X-Gemini-API-Key': userGeminiKey,
         'X-User-Id': session.user.id,

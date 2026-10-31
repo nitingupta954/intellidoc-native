@@ -2,10 +2,10 @@ import { z } from 'zod';
 
 const serverSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  AI_SERVICE_URL: z.string().url().optional().default('http://127.0.0.1:8000'),
+  AI_SERVICE_URL: z.string().url().optional().default('https://intellidoc-native.onrender.com'),
   QDRANT_URL: z.string().url().optional().default('http://localhost:6343'),
-  APP_URL: z.string().url().optional().default('http://localhost:3000'),
-  ALLOWED_ORIGIN: z.string().url().optional().default('http://localhost:3000'),
+  APP_URL: z.string().url().optional().default('https://doc-management-native.vercel.app'),
+  ALLOWED_ORIGIN: z.string().url().optional().default('https://doc-management-native.vercel.app'),
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
@@ -16,7 +16,7 @@ const serverSchema = z.object({
 
 const clientSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
-  API_URL: z.string().url().default('http://localhost:8000/api/v1'),
+  API_URL: z.string().url().default('https://intellidoc-native.onrender.com'),
   NEXT_PUBLIC_RAZORPAY_KEY_ID: z.string().optional(),
   NEXT_PUBLIC_SITE_URL: z.string().url({ message: "NEXT_PUBLIC_SITE_URL must be a valid URL and cannot be missing or fallback silently." }),
 });
