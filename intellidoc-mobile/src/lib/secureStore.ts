@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 
 const CookieManager = Platform.OS !== 'web' ? require('@react-native-cookies/cookies').default : null;
 const SESSION_COOKIE_KEY = 'intellidoc_session_cookie';
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://doc-management-native.vercel.app';
 
 export interface StoredCookie {
   name: string;

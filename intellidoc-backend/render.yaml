@@ -9,7 +9,11 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: ALLOWED_ORIGIN
-        sync: false
+        value: "*"
+      - key: APP_URL
+        value: https://doc-management-native.vercel.app
+      - key: AI_SERVICE_URL
+        value: https://intellidoc-native.onrender.com
       - key: AWS_REGION
         sync: false
       - key: AWS_ACCESS_KEY_ID
@@ -23,12 +27,30 @@ services:
       - key: S3_ENDPOINT
         sync: false
       - key: S3_FORCE_PATH_STYLE
-        sync: false
+        value: "true"
       - key: QDRANT_URL
         sync: false
       - key: QDRANT_API_KEY
         sync: false
       - key: RABBITMQ_URL
         sync: false
+      - key: REDIS_URL
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: INTERNAL_SERVICE_SECRET
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: CRAG_UPPER_THRESHOLD
+        value: "0.55"
+      - key: CRAG_LOWER_THRESHOLD
+        value: "0.25"
+      - key: CRAG_SYNTHESIS_ENABLED
+        value: "true"
+      - key: LOW_BALANCE_THRESHOLD
+        value: "5000"
+      - key: NEGATIVE_GRACE_CREDITS
+        value: "2000"

@@ -10,8 +10,8 @@ import { loadSessionCookie, clearSessionCookie } from '../lib/secureStore';
 import { router } from 'expo-router';
 
 // On both web and native, use the URL from .env (e.g. production Vercel URL).
-// Only fallback to localhost if the env variable is completely missing.
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+// Fallback to production Vercel URL if the env variable is not provided.
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://doc-management-native.vercel.app';
 
 const api = axios.create({
   baseURL: BASE_URL,

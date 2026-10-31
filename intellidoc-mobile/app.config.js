@@ -1,5 +1,6 @@
 module.exports = ({ config }) => ({
   ...config,
+  owner: 'nitingupta954',
   name: 'IntelliDoc',
   slug: 'intellidoc-mobile',
   version: '1.0.0',
@@ -48,9 +49,7 @@ module.exports = ({ config }) => ({
     typedRoutes: true,
   },
   extra: {
+    ...config?.extra,
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://doc-management-native.vercel.app',
-    eas: {
-      projectId: '04ca3ef4-3145-45f1-8007-8d67823f0c67',
-    },
   },
 });

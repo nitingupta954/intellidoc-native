@@ -11,6 +11,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.intellidoc.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -25,9 +26,10 @@
     "extra": {
       "apiUrl": "https://doc-management-native.vercel.app",
       "router": {},
-      "eas": {}
-
+      "eas": {
+        "projectId": "1c6cec73-ae66-47f3-8453-3338a34f0a5a"
+      }
     },
-    "owner": "nitingupta955"
+    "owner": "nitingupta954"
   }
 }

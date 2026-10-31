@@ -58,28 +58,31 @@ async def require_sufficient_credits(request: Request):
     app_url = settings.APP_URL
     secret = settings.INTERNAL_SERVICE_SECRET
     
-    async with httpx.AsyncClient() as client:
-        try:
+    try:
+        async with httpx.AsyncClient() as client:
             resp = await client.get(
                 f"{app_url}/api/internal/wallet/{user_id}", 
                 headers={"Authorization": f"Bearer {secret}"},
                 timeout=5.0
             )
             if resp.status_code == 401 or resp.status_code == 403:
-                logger.error("Unauthorized access to internal wallet API. Check INTERNAL_SERVICE_SECRET.")
-                raise HTTPException(status_code=500, detail="AI Service configuration error")
+                logger.error("Unauthorized access to internal wallet API. Check INTERNAL_SERVICE_SECRET. Allowing request.")
+                # Fail open — misconfigured secret should not block users
+                return True
             elif resp.status_code == 404:
-                raise HTTPException(status_code=404, detail="Wallet not found")
+                # New user — wallet not yet provisioned (backend auto-provisions it on next chat)
+                logger.info(f"Wallet not found for user {user_id}, allowing request (backend will provision)")
+                return True
             elif resp.status_code != 200:
-                logger.error(f"Failed to fetch wallet balance: {resp.status_code} {resp.text}")
-                raise HTTPException(status_code=500, detail="Failed to verify credit balance")
+                logger.warning(f"Wallet API returned {resp.status_code}, failing open to not block user")
+                return True
             
             data = resp.json()
             balance = data.get("balance", 0)
-        except httpx.RequestError as e:
-            logger.error(f"Failed to reach internal wallet API: {e}")
-            # If we can't reach the internal service, assume balance check fails closed
-            raise HTTPException(status_code=500, detail="Failed to verify credit balance")
+    except httpx.RequestError as e:
+        logger.warning(f"Failed to reach internal wallet API: {e}. Failing open.")
+        # Fail OPEN — don't block users if the backend is temporarily unreachable
+        return True
 
     grace = settings.NEGATIVE_GRACE_CREDITS
     if balance + grace < estimated_cost:

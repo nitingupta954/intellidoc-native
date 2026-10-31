@@ -10,7 +10,7 @@ import { StreamEvent, Citation, CragConfirmation } from '../types';
 
 export type { StreamEvent };
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://doc-management-native.vercel.app';
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 // Feed it raw chunk strings; it emits parsed StreamEvents.
