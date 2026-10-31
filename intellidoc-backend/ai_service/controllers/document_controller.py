@@ -25,12 +25,13 @@ async def handle_document_process(
             region_name=settings.AWS_REGION,
         )
         object_key = request.file_path
+        bucket_name = settings.S3_BUCKET or "intellidoc"
         if object_key.startswith("minio://"):
             parts = object_key.replace("minio://", "").split("/", 1)
             if len(parts) == 2:
                 object_key = parts[1]
                 
-        head = s3.head_object(Bucket=settings.S3_BUCKET, Key=object_key)
+        head = s3.head_object(Bucket=bucket_name, Key=object_key)
         size = head.get("ContentLength", 0)
         if size > MAX_SIZE_BYTES:
             raise HTTPException(
@@ -40,7 +41,7 @@ async def handle_document_process(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to verify PDF size: {e}")
+        logger.warning(f"Could not verify PDF size from storage: {e}")
 
     bg_tasks.add_task(
         process_document_pipeline,

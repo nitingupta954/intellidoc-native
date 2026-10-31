@@ -30,7 +30,7 @@ async def get_vector_store(request=None, provider: str = "openai", dimension: in
     return _vector_stores[key]
 
 def get_redis_client(request):
-    return request.app.state.redis
+    return getattr(request.app.state, "redis", None)
 
 async def require_sufficient_credits(request: Request):
     uses_system_key = request.headers.get("x-uses-system-key", "true").lower() == "true"

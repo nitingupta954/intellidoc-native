@@ -46,7 +46,13 @@ async def handle_chat_query(
         kb_id_str = request.knowledge_base_id or "none"
         full_resp_key = f"resp:{request.workspace_id}:{kb_id_str}:{doc_ids_str}:{q_hash}"
 
-        cached_response = await redis_client.get(full_resp_key)
+        cached_response = None
+        try:
+            if redis_client:
+                cached_response = await redis_client.get(full_resp_key)
+        except Exception as redis_err:
+            logger.warning(f"Redis get cache failed: {redis_err}")
+
         if cached_response:
             logger.info("Full response cache hit!")
             async def cached_generator():
@@ -62,14 +68,26 @@ async def handle_chat_query(
         chat_id = request.history[-1].get("chat_id", "default") if request.history else "default"
 
         async def get_or_create_embedding(query, emb_cache_key):
-            cached_emb = await redis_client.get(emb_cache_key)
+            cached_emb = None
+            try:
+                if redis_client:
+                    cached_emb = await redis_client.get(emb_cache_key)
+            except Exception:
+                cached_emb = None
+
             if cached_emb:
                 logger.info("Embedding cache hit!")
                 emb_data = json.loads(cached_emb)
                 return emb_data["vector"], emb_data["provider"], emb_data["dim"]
             else:
-                vector, prov, d = embedding_svc.embed_query(query, openai_api_key=x_openai_api_key, gemini_api_key=x_gemini_api_key)
-                await redis_client.setex(emb_cache_key, 30 * 24 * 3600, json.dumps({"vector": vector, "provider": prov, "dim": d}))
+                effective_openai = x_openai_api_key or settings.OPENAI_API_KEY
+                effective_gemini = x_gemini_api_key or settings.GEMINI_API_KEY
+                vector, prov, d = embedding_svc.embed_query(query, openai_api_key=effective_openai, gemini_api_key=effective_gemini)
+                try:
+                    if redis_client:
+                        await redis_client.setex(emb_cache_key, 30 * 24 * 3600, json.dumps({"vector": vector, "provider": prov, "dim": d}))
+                except Exception:
+                    pass
                 return vector, prov, d
 
         async def fetch_chat_history(c_id: str):

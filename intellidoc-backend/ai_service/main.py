@@ -26,10 +26,13 @@ app = FastAPI(
     version="2.0.0"
 )
 
+origins = [settings.ALLOWED_ORIGIN] if settings.ALLOWED_ORIGIN != "*" else ["*"]
+allow_creds = False if "*" in origins else True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.ALLOWED_ORIGIN], 
-    allow_credentials=True,
+    allow_origins=origins if not allow_creds else [settings.ALLOWED_ORIGIN, "https://doc-management-native.vercel.app", "http://localhost:3000", "http://localhost:8081"], 
+    allow_credentials=allow_creds,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -48,17 +51,31 @@ consumer_task = None
 async def startup_event():
     global consumer_task
     logger.info("Initializing Redis client...")
-    app.state.redis = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    try:
+        app.state.redis = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    except Exception as e:
+        logger.warning(f"Redis initialization warning: {e}")
+        app.state.redis = None
     
     # Pre-initialize default Qdrant vector store
-    await get_vector_store()
+    try:
+        await get_vector_store()
+    except Exception as e:
+        logger.warning(f"Vector store pre-init warning: {e}")
     
     logger.info("Starting RabbitMQ Consumer...")
-    consumer_task = asyncio.create_task(consume())
+    try:
+        consumer_task = asyncio.create_task(consume())
+    except Exception as e:
+        logger.warning(f"RabbitMQ consumer start warning: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await app.state.redis.close()
+    if getattr(app.state, "redis", None):
+        try:
+            await app.state.redis.close()
+        except Exception:
+            pass
 
 # Include Routers
 app.include_router(health_router, tags=["Health"])

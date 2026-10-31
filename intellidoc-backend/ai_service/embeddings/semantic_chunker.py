@@ -17,9 +17,10 @@ class SemanticChunker:
         """
         chunks = []
         for el in parsed_elements:
-            if el["type"] in ["NarrativeText", "Title", "UncategorizedText", "text"]:
-                text = el["text"]
-                metadata = el.get("metadata", {})
+            el_type = el.get("type", "text") if isinstance(el, dict) else "text"
+            if el_type in ["NarrativeText", "Title", "UncategorizedText", "text"]:
+                text = el.get("text") or el.get("content") or "" if isinstance(el, dict) else str(el)
+                metadata = el.get("metadata", {}) if isinstance(el, dict) else {}
                 
                 # Skip empty text
                 if not text.strip():

@@ -69,7 +69,10 @@ export async function POST(req: Request) {
         const response = await fetch(`${aiServiceBase}/api/v1/documents/process`, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-Internal-Secret": process.env.INTERNAL_SERVICE_SECRET || "your_super_secret_internal_key",
+            "X-OpenAI-API-Key": process.env.OPENAI_API_KEY || "",
+            "X-Gemini-API-Key": process.env.GEMINI_API_KEY || ""
           },
           body: JSON.stringify({
             document_id: document.id,
@@ -79,7 +82,7 @@ export async function POST(req: Request) {
             uploaded_by: session.user.id,
             metadata: {}
           }),
-          signal: AbortSignal.timeout(10000)
+          signal: AbortSignal.timeout(15000)
         });
 
         if (response.ok) {

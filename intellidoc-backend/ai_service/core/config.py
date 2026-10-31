@@ -10,16 +10,16 @@ class Settings(BaseSettings):
     RABBITMQ_URL: str = "amqp://guest:guest@rabbitmq:5672/"
     ALLOWED_ORIGIN: str = "http://localhost:3000"
 
-    # S3 / MinIO
-    AWS_ACCESS_KEY_ID: str = "admin"
-    AWS_SECRET_ACCESS_KEY: str = "password"
-    AWS_REGION: str = "us-east-1"
-    S3_BUCKET: str = "intellidoc-documents"
-    S3_ENDPOINT: str = "http://minio:9000"
+    # S3 / Cloudflare R2
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "auto"
+    S3_BUCKET: str = ""
+    S3_ENDPOINT: str = ""
 
-    AI_SERVICE_URL: str = "http://localhost:8000"
-    APP_URL: str = "http://localhost:3000"
-    INTERNAL_SERVICE_SECRET: str = "default_internal_secret_for_dev"
+    AI_SERVICE_URL: str = ""
+    APP_URL: str = ""
+    INTERNAL_SERVICE_SECRET: str = ""
     GEMINI_API_KEY: str = ""
     LOW_BALANCE_THRESHOLD: int = 5000
     NEGATIVE_GRACE_CREDITS: int = 2000

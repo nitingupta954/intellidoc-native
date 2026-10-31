@@ -171,7 +171,11 @@ async def _stream_final_answer(
                 "citations": citations,
                 "synthesized": synthesized,
             })
-            await redis_client.setex(full_resp_key, 43200, cache_payload)
+            try:
+                if redis_client:
+                    await redis_client.setex(full_resp_key, 43200, cache_payload)
+            except Exception as e:
+                logger.warning(f"Failed to cache full response in Redis: {e}")
 
         bg_tasks.add_task(save_chat_to_db, chat_id, question, full_answer, workspace_id)
         bg_tasks.add_task(log_analytics_event, "chat_query", metrics)
