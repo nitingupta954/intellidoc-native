@@ -53,7 +53,7 @@ export default function ChatScreen() {
   const { data: allDocs = [] } = useQuery({
     queryKey: ['documents', wsId],
     queryFn: () => fetchDocuments(wsId!),
-    enabled: !!wsId && !!resolvedDocId,
+    enabled: !!wsId,
   });
   
   const { data: allKbs = [] } = useQuery({
@@ -64,6 +64,28 @@ export default function ChatScreen() {
 
   const activeDoc = (allDocs as any[]).find((d: any) => d.id === resolvedDocId);
   const activeKb = (allKbs as any[]).find((k: any) => k.id === resolvedKbId);
+
+  const getCitationInfo = (c: any, index: number) => {
+    const docId =
+      c.docId ||
+      c.metadata?.document_id ||
+      c.metadata?.documentId ||
+      c.metadata?.docId ||
+      resolvedDocId;
+
+    const matchedDoc = (allDocs as any[]).find((d: any) => d.id === docId);
+
+    const sourceName =
+      (c.metadata?.title as string) ||
+      (c.metadata?.fileName as string) ||
+      (c.metadata?.filename as string) ||
+      matchedDoc?.title ||
+      matchedDoc?.filename ||
+      (activeDoc && (!docId || docId === activeDoc.id) ? (activeDoc.title || activeDoc.filename) : undefined) ||
+      (docId ? `Document (${String(docId).slice(-6)})` : `Source ${index + 1}`);
+
+    return { docId, sourceName };
+  };
 
   // Initialize conversation based on route params
   useEffect(() => {
@@ -137,17 +159,24 @@ export default function ChatScreen() {
               {item.citations && item.citations.length > 0 && (
                 <View style={styles.citationsBox}>
                   <Text style={styles.citationsTitle}>Sources:</Text>
-                  {item.citations.map((c, i) => (
-                    <TouchableOpacity
-                      key={i}
-                      style={styles.citationLink}
-                      onPress={() => router.push(`/(app)/documents/${c.docId}` as any)}
-                    >
-                      <Text style={styles.citationText} numberOfLines={1}>
-                        [{i + 1}] {(c.metadata?.title as string) || (c.metadata?.fileName as string) || c.docId}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  {item.citations.map((c, i) => {
+                    const { docId, sourceName } = getCitationInfo(c, i);
+                    return (
+                      <TouchableOpacity
+                        key={i}
+                        style={styles.citationLink}
+                        onPress={() => {
+                          if (docId) {
+                            router.push(`/(app)/documents/${docId}` as any);
+                          }
+                        }}
+                      >
+                        <Text style={styles.citationText} numberOfLines={1}>
+                          [{i + 1}] 📄 {sourceName}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               )}
 
@@ -174,30 +203,44 @@ export default function ChatScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(app)/chat/history' as any)}>
-            <Text style={styles.iconText}>☰</Text>
-          </TouchableOpacity>
+          {paramDocId || router.canGoBack() ? (
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
+              <Text style={styles.iconText}>←</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(app)/chat/history' as any)}>
+              <Text style={styles.iconText}>☰</Text>
+            </TouchableOpacity>
+          )}
           <View style={styles.headerTitleWrap}>
             <Text style={styles.headerTitle}>IntelliDoc AI</Text>
-            {activeDoc && <Text style={styles.headerSub} numberOfLines={1}>📄 {activeDoc.filename}</Text>}
+            {activeDoc && <Text style={styles.headerSub} numberOfLines={1}>📄 {activeDoc.filename || activeDoc.title}</Text>}
             {activeKb && <Text style={styles.headerSub} numberOfLines={1}>🧠 {activeKb.name}</Text>}
             {(!activeDoc && !activeKb && (resolvedDocId || resolvedKbId)) && (
               <Text style={styles.headerSub}>Chatting with context</Text>
             )}
           </View>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => {
-             setActiveConversation(null);
-             router.replace('/(app)/chat');
-          }}>
-            <Text style={styles.iconText}>+</Text>
-          </TouchableOpacity>
+          <View style={styles.headerRightActions}>
+            {paramDocId ? (
+              <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(app)/chat/history' as any)}>
+                <Text style={styles.iconText}>☰</Text>
+              </TouchableOpacity>
+            ) : null}
+            <TouchableOpacity style={styles.iconBtn} onPress={() => {
+               setActiveConversation(null);
+               router.replace('/(app)/chat');
+            }}>
+              <Text style={styles.iconText}>+</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Message List */}
@@ -287,6 +330,7 @@ const styles = StyleSheet.create({
   headerTitleWrap: { alignItems: 'center', flex: 1, paddingHorizontal: 10 },
   headerTitle: { fontSize: 17, fontWeight: '700', color: Colors.text },
   headerSub: { fontSize: 12, color: Colors.primary },
+  headerRightActions: { flexDirection: 'row', alignItems: 'center' },
   iconBtn: { padding: 8 },
   iconText: { fontSize: 24, color: Colors.text },
   listWrap: { flex: 1 },

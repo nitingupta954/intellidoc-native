@@ -220,11 +220,11 @@ async def _run_set_level_eval(
             reasoning=reasoning,
         )
     except Exception as e:
-        logger.warning(f"Set-level CRAG eval failed: {e}; defaulting to INSUFFICIENT")
+        logger.warning(f"Set-level CRAG eval failed: {e}; defaulting to SYNTHESIZABLE with mid-range relevance")
         return SetEvalResult(
-            topic_relevance=0.0,
-            answerability=Answerability.INSUFFICIENT,
-            reasoning=f"Evaluation error: {e}",
+            topic_relevance=0.6,                      # assume on-topic — user is asking about their doc
+            answerability=Answerability.SYNTHESIZABLE, # give it a chance rather than blocking immediately
+            reasoning=f"Evaluation error (defaulting to pass): {e}",
         )
 
 
@@ -345,7 +345,14 @@ async def evaluate_documents(
         all_scores = [float(c.get("score", 0.0)) for c in citations]
 
         # Verdict routing
-        if blended >= settings.CRAG_UPPER_THRESHOLD:
+        if set_eval.answerability == Answerability.DIRECT:
+            # Answer is explicitly in the doc — never prompt web search for DIRECT hits
+            verdict = EvalVerdict.CORRECT
+            reason = (
+                f"Answerability=DIRECT: answer found explicitly in retrieved chunks. "
+                f"Blended={blended:.3f}, topic_relevance={set_eval.topic_relevance:.2f}."
+            )
+        elif blended >= settings.CRAG_UPPER_THRESHOLD:
             verdict = EvalVerdict.CORRECT
             reason = (
                 f"Blended confidence {blended:.3f} ≥ upper threshold {settings.CRAG_UPPER_THRESHOLD}. "

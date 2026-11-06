@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Text from '../../../src/components/Text';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Platform, Modal } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -18,12 +18,46 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: Colors.warning,
 };
 
+// Cross-platform confirm dialog — uses Alert on native, inline modal on web
+function useConfirmDialog() {
+  const [dialog, setDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    confirmStyle?: 'destructive' | 'default';
+    onConfirm: () => void;
+  }>({ visible: false, title: '', message: '', confirmText: 'OK', onConfirm: () => {} });
+
+  const confirm = (
+    title: string,
+    message: string,
+    confirmText: string,
+    onConfirm: () => void,
+    confirmStyle: 'destructive' | 'default' = 'destructive',
+  ) => {
+    if (Platform.OS !== 'web') {
+      Alert.alert(title, message, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: confirmText, style: confirmStyle, onPress: onConfirm },
+      ]);
+    } else {
+      setDialog({ visible: true, title, message, confirmText, confirmStyle, onConfirm });
+    }
+  };
+
+  const dismiss = () => setDialog(d => ({ ...d, visible: false }));
+
+  return { dialog, confirm, dismiss };
+}
+
 export default function DocumentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const { dialog, confirm, dismiss } = useConfirmDialog();
 
   const { data: doc, isLoading, refetch } = useQuery({
     queryKey: ['document', id],
@@ -37,28 +71,22 @@ export default function DocumentDetailScreen() {
 
   const handleCancel = () => {
     if (!doc) return;
-    Alert.alert(
+    confirm(
       'Cancel Processing',
       `Are you sure you want to cancel processing for "${doc.filename}"?`,
-      [
-        { text: 'No', style: 'cancel' },
-        {
-          text: 'Yes, Cancel',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsCancelling(true);
-              await cancelDocumentProcessing(doc.id);
-              queryClient.invalidateQueries({ queryKey: ['document', id] });
-              queryClient.invalidateQueries({ queryKey: ['documents'] });
-            } catch (err: any) {
-              Alert.alert('Cancel Failed', err?.response?.data?.error || err.message || 'Could not cancel processing.');
-            } finally {
-              setIsCancelling(false);
-            }
-          },
-        },
-      ]
+      'Yes, Cancel',
+      async () => {
+        try {
+          setIsCancelling(true);
+          await cancelDocumentProcessing(doc.id);
+          queryClient.invalidateQueries({ queryKey: ['document', id] });
+          queryClient.invalidateQueries({ queryKey: ['documents'] });
+        } catch (err: any) {
+          Alert.alert('Cancel Failed', err?.response?.data?.error || err.message || 'Could not cancel processing.');
+        } finally {
+          setIsCancelling(false);
+        }
+      },
     );
   };
 
@@ -85,28 +113,22 @@ export default function DocumentDetailScreen() {
 
   const handleDelete = () => {
     if (!doc) return;
-    Alert.alert(
+    confirm(
       'Delete Document',
       `Are you sure you want to permanently delete "${doc.filename}"? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsDeleting(true);
-              await deleteDocument(doc.id);
-              queryClient.invalidateQueries({ queryKey: ['documents'] });
-              router.back();
-            } catch (err: any) {
-              Alert.alert('Delete Failed', err?.response?.data?.error || err?.message || 'Could not delete document.');
-            } finally {
-              setIsDeleting(false);
-            }
-          },
-        },
-      ]
+      'Delete',
+      async () => {
+        try {
+          setIsDeleting(true);
+          await deleteDocument(doc.id);
+          queryClient.invalidateQueries({ queryKey: ['documents'] });
+          router.back();
+        } catch (err: any) {
+          Alert.alert('Delete Failed', err?.response?.data?.error || err?.message || 'Could not delete document.');
+        } finally {
+          setIsDeleting(false);
+        }
+      },
     );
   };
 
@@ -293,6 +315,35 @@ export default function DocumentDetailScreen() {
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Web-only inline confirmation modal (Alert.alert doesn't fire callbacks on web) */}
+      {dialog.visible && (
+        <Modal transparent animationType="fade" visible={dialog.visible} onRequestClose={dismiss}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              <Text style={styles.modalTitle}>{dialog.title}</Text>
+              <Text style={styles.modalMessage}>{dialog.message}</Text>
+              <View style={styles.modalActions}>
+                <TouchableOpacity style={styles.modalCancelBtn} onPress={dismiss}>
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalConfirmBtn,
+                    dialog.confirmStyle === 'destructive' && { backgroundColor: Colors.error },
+                  ]}
+                  onPress={() => {
+                    dismiss();
+                    dialog.onConfirm();
+                  }}
+                >
+                  <Text style={styles.modalConfirmText}>{dialog.confirmText}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -420,4 +471,42 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   cancelledText: { color: Colors.warning, fontSize: 13, lineHeight: 18 },
+  // Web confirm modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalBox: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 10 },
+  modalMessage: { fontSize: 14, color: Colors.textSecondary, lineHeight: 20, marginBottom: 24 },
+  modalActions: { flexDirection: 'row', gap: 12 },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalCancelText: { color: Colors.text, fontWeight: '600', fontSize: 15 },
+  modalConfirmBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+  },
+  modalConfirmText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });

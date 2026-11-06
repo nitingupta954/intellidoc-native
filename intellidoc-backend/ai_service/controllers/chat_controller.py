@@ -149,12 +149,15 @@ async def handle_chat_query(
         for res in search_results:
             payload = res.payload or {}
             text = payload.get("content", "")
+            meta = payload.get("metadata", {})
             retrieved_docs.append(text)
+            doc_id = meta.get("document_id") or meta.get("documentId")
             citations.append({
+                "docId": doc_id,
                 "score": getattr(res, "score", 1.0),
                 "text_snippet": text[:150] + "..." if len(text) > 150 else text,
                 "full_text": text,
-                "metadata": payload.get("metadata", {}),
+                "metadata": meta,
             })
 
         if not retrieved_docs:
@@ -181,6 +184,35 @@ async def handle_chat_query(
         eval_result = await crag_evaluator.evaluate_documents(
             request.query, citations, x_openai_api_key, x_gemini_api_key
         )
+
+        # ── Document-scoped bypass: user asked about their own specific doc(s) ─
+        # If the user explicitly selected document_ids and retrieval found chunks
+        # (score > 0.4), trust the retrieval — don't prompt for web search.
+        if (
+            request.document_ids
+            and len(request.document_ids) > 0
+            and citations
+            and eval_result.verdict != EvalVerdict.CORRECT
+        ):
+            avg_score = sum(float(c.get("score", 0.0)) for c in citations) / len(citations)
+            if avg_score >= 0.4:
+                logger.info(
+                    "CRAG override: document-scoped query with avg_retrieval=%.3f — "
+                    "forcing CORRECT to avoid unnecessary web-search prompt. "
+                    "Original verdict: %s, answerability: %s",
+                    avg_score, eval_result.verdict.value, eval_result.answerability.value
+                )
+                from crag.models import EvalResult
+                eval_result = EvalResult(
+                    verdict=EvalVerdict.CORRECT,
+                    good_docs=citations,
+                    all_scores=[float(c.get("score", 0.0)) for c in citations],
+                    reason=f"Document-scoped override: avg_retrieval={avg_score:.3f} ≥ 0.4",
+                    topic_relevance=eval_result.topic_relevance,
+                    answerability=eval_result.answerability,
+                    reasoning=eval_result.reasoning,
+                    blended_score=eval_result.blended_score,
+                )
 
         # ── CORRECT verdict (DIRECT or blended-score SYNTHESIZABLE) ──────────
         if eval_result.verdict == EvalVerdict.CORRECT:

@@ -55,9 +55,6 @@ export async function PATCH(
     const documentId = resolvedParams.id;
     const body = await req.json();
     const { status, chunkCount, embeddingModel, errorMessage, currentStep, progress, summary, suggestedQuestions, folderId } = body;
-    
-    // In a real app we'd verify an internal API key here, 
-    // but since this is local we'll just allow it.
 
     const document = await db.document.update({
       where: { id: documentId },
@@ -76,8 +73,12 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, document });
   } catch (error: any) {
-    console.error('Update Document Error:', error);
-    return NextResponse.json({ error: 'Failed to update document' }, { status: 500 });
+    console.error('Update Document Error:', error?.message ?? error);
+    // Surface Prisma error code to help debug field/schema mismatches
+    return NextResponse.json(
+      { error: 'Failed to update document', detail: error?.message, code: error?.code },
+      { status: 500 }
+    );
   }
 }
 
@@ -112,10 +113,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
 
-    const isOwner = document.uploadedBy === session.user.id;
-    const isWsOwner = document.workspace?.ownerId === session.user.id;
-    const isMember = (document.workspace?.members?.length ?? 0) > 0;
-    if (!isOwner && !isMember && !isWsOwner) {
+    const userId = session.user.id;
+    const isUploader = document.uploadedBy === userId;
+    const isWsOwner  = document.workspace?.ownerId === userId;
+    const isWsMember = (document.workspace?.members?.length ?? 0) > 0;
+
+    // Allow: file uploader, workspace owner, or any workspace member
+    if (!isUploader && !isWsOwner && !isWsMember) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -125,7 +129,7 @@ export async function DELETE(
         const { deleteFile } = await import('@/lib/storage');
         await Promise.race([
           deleteFile(document.storageKey),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Storage delete timeout')), 2500))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Storage delete timeout')), 5000))
         ]);
       } catch (storageErr) {
         console.warn('Storage file cleanup skipped (continuing with DB delete):', storageErr);
@@ -139,7 +143,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Document deleted successfully' });
   } catch (error: any) {
-    console.error('Delete Document Error:', error);
-    return NextResponse.json({ error: 'Failed to delete document' }, { status: 500 });
+    console.error('Delete Document Error:', error?.message ?? error);
+    return NextResponse.json({ error: 'Failed to delete document', detail: error?.message }, { status: 500 });
   }
 }

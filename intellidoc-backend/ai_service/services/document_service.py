@@ -87,6 +87,13 @@ async def process_document_pipeline(
                 if knowledge_base_id:
                     el["metadata"]["knowledge_base_id"] = knowledge_base_id
                 el["metadata"]["uploaded_by"] = uploaded_by
+                if metadata and isinstance(metadata, dict):
+                    if metadata.get("title"):
+                        el["metadata"]["title"] = metadata["title"]
+                    if metadata.get("fileName") or metadata.get("filename"):
+                        el["metadata"]["fileName"] = metadata.get("fileName") or metadata.get("filename")
+                if "fileName" not in el["metadata"]:
+                    el["metadata"]["fileName"] = os.path.basename(object_key)
             
         # 2. Chunk
         await update_document_status(document_id, {"currentStep": "Chunking text", "progress": 50})

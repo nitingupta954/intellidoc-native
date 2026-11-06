@@ -1,13 +1,5 @@
 import type { NextConfig } from "next";
 
-// Ignore Next.js client abort ECONNRESET globally
-process.on('uncaughtException', (err: any) => {
-  if (err && err.code === 'ECONNRESET' && err.message === 'aborted') {
-    return;
-  }
-  console.error('Unhandled Exception:', err);
-});
-
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
