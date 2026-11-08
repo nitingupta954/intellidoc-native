@@ -33,9 +33,9 @@ services:
       - key: QDRANT_API_KEY
         sync: false
       - key: RABBITMQ_URL
-        sync: false
+        sync: false  # Set in Render Dashboard: get a free URL from cloudamqp.com
       - key: REDIS_URL
-        sync: false
+        sync: false  # Set in Render Dashboard: get a free URL from upstash.com
       - key: OPENAI_API_KEY
         sync: false
       - key: GEMINI_API_KEY
