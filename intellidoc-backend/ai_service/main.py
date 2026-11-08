@@ -57,17 +57,24 @@ async def startup_event():
         logger.warning(f"Redis initialization warning: {e}")
         app.state.redis = None
     
-    # Pre-initialize default Qdrant vector store
+    # Pre-initialize default Qdrant vector store with timeout so a bad URL
+    # cannot hang the process and block Render's health check.
     try:
-        await get_vector_store()
+        await asyncio.wait_for(get_vector_store(), timeout=15.0)
+    except asyncio.TimeoutError:
+        logger.warning("Qdrant pre-init timed out — will retry on first request")
     except Exception as e:
         logger.warning(f"Vector store pre-init warning: {e}")
     
     logger.info("Starting RabbitMQ Consumer...")
+    # asyncio.create_task() never raises synchronously — the task itself is
+    # allowed to fail (it already has its own try/except inside consume()).
     try:
         consumer_task = asyncio.create_task(consume())
     except Exception as e:
         logger.warning(f"RabbitMQ consumer start warning: {e}")
+    
+    logger.info("Startup complete — service is ready to handle requests.")
 
 @app.on_event("shutdown")
 async def shutdown_event():

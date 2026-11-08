@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: intellidoc-ai-service
+    env: docker
+    region: oregon
+    plan: free
+    rootDir: intellidoc-backend/ai_service
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ALLOWED_ORIGIN
+        value: "*"
+      - key: APP_URL
+        value: https://doc-management-native.vercel.app
+      - key: AI_SERVICE_URL
+        value: https://intellidoc-native.onrender.com
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_BUCKET_NAME
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_FORCE_PATH_STYLE
+        value: "true"
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: RABBITMQ_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: INTERNAL_SERVICE_SECRET
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: CRAG_UPPER_THRESHOLD
+        value: "0.55"
+      - key: CRAG_LOWER_THRESHOLD
+        value: "0.25"
+      - key: CRAG_SYNTHESIS_ENABLED
+        value: "true"
+      - key: LOW_BALANCE_THRESHOLD
+        value: "5000"
+      - key: NEGATIVE_GRACE_CREDITS
+        value: "2000"
